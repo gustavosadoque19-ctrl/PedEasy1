@@ -1,0 +1,21 @@
+{
+  "bot_ativo": true,
+  "boasVindas": "Olá! Sou o assistente virtual. Como posso agilizar seu atendimento hoje? Digite uma das opções:\n👉 *Cardápio* (Para ver nossas opções)\n👉 *Pedido* (Para acompanhar ou repetir)\n👉 *Cadastro* (Para atualizar seus dados)\n👉 *Ajuda* (Se precisar de suporte)",
+  "cardapioResposta": "Aqui está o nosso cardápio digital: [INSERIR LINK]",
+  "pedidoOpcoes": "O que você deseja fazer?\n1️⃣ *Consultar status* de um pedido em andamento\n2️⃣ *Repetir* um pedido realizado anteriormente\n\nDigite *1* ou *2* para escolher.",
+  "pedidoStatusInstrucao": "Informe o número do pedido que deseja consultar. Ex: *#123*",
+  "pedidoRepetirInstrucao": "Informe o número do pedido que deseja repetir. Ex: *#123*",
+  "cadastroSolicitado": "Vamos fazer seu cadastro! Primeiro, informe seu *nome completo*:",
+  "cadastroPerguntaTelefone": "Ótimo! Agora informe seu *telefone para contato*:",
+  "cadastroPerguntaEndereco": "Perfeito! Por último, informe seu *endereço de entrega*:",
+  "cadastroConfirmacao": "Confirme os dados informados:\n\n*Nome:* {nome}\n*Telefone:* {telefone}\n*Endereço:* {endereco}\n\nDigite *confirmar* para finalizar ou *cancelar* para reiniciar.",
+  "cadastroConfirmado": "✅ Cadastro realizado com sucesso! Agora você pode consultar pedidos e fazer pedidos pelo WhatsApp.",
+  "cadastroCancelado": "❌ Cadastro cancelado. Digite *cadastro* quando quiser tentar novamente.",
+  "ajudaExplicacao": "*Comandos disponíveis:*\n\n📋 *Cardápio* - Ver o cardápio digital\n📦 *Pedido* - Consultar status ou repetir um pedido\n📝 *Cadastro* - Atualizar seus dados cadastrais\n❓ *Ajuda* - Mostrar esta mensagem",
+  "ajudaTransferencia": "Vou transferir você para um de nossos atendentes humanos para resolver isso rapidamente.",
+  "erroGeral": "Desculpe, ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.",
+  "erroBackend": "Sistema temporariamente indisponível. Tente novamente em instantes.",
+  "pedidoNaoEncontrado": "Pedido não encontrado. Verifique o número informado.",
+  "nenhumPedido": "Nenhum pedido encontrado para este contato.",
+  "pedidoRepetido": "✅ Pedido #{id} registrado com sucesso! Em breve você receberá a confirmação."
+}

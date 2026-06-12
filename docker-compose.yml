@@ -1,0 +1,56 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_BOT_API_URL: ${VITE_BOT_API_URL:-http://localhost:3001}
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - bot
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-pedy-dev-secret-key-change-in-production}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost}
+      - FOCUS_TOKEN=${FOCUS_TOKEN:-}
+      - FOCUS_CIDADE=${FOCUS_CIDADE:-Sao Paulo}
+      - FOCUS_UF=${FOCUS_UF:-SP}
+      - FOCUS_API_URL=${FOCUS_API_URL:-https://api.focusnfe.com.br}
+    volumes:
+      - backend-data:/app/data
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: ./whatsapp-bot
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - CONFIG_PORT=3001
+      - BOT_API_KEY=${BOT_API_KEY:-}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost}
+      - API_URL=http://backend:3000/api
+      - CHROME_PATH=/usr/bin/chromium-browser
+    volumes:
+      - bot-sessions:/app/sessions
+      - bot-cache:/app/.wwebjs_cache
+      - ./whatsapp-bot/config.json:/app/config.json
+    cap_add:
+      - SYS_ADMIN
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+  bot-sessions:
+  bot-cache:

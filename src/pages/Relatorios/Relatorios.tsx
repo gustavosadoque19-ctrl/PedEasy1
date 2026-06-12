@@ -113,7 +113,7 @@ export default function Relatorios() {
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Grid container spacing={2} alignItems="center">
+          <Grid container spacing={2} sx={{ alignItems: 'center' }}>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField fullWidth label="Data Início" type="date" size="small"
                 value={dataInicio} onChange={(e) => setDataInicio(e.target.value)}

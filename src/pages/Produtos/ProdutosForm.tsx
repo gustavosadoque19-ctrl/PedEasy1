@@ -47,7 +47,7 @@ export default function ProdutosForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<ProdutoFormData>({
-    resolver: zodResolver(produtoSchema),
+    resolver: zodResolver(produtoSchema) as any,
     defaultValues: { nome: '', descricao: '', categoria: '', preco_venda: '', preco_custo: '', unidade: 'un', estoque_atual: '', estoque_minimo: '', ativo: true, adicionais_ids: [], max_adicionais: 0 },
   });
 
@@ -121,7 +121,7 @@ export default function ProdutosForm() {
       {apiError && <Alert severity="error" sx={{ mb: 2 }}>{apiError}</Alert>}
       <Card>
         <CardContent>
-          <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+          <Box component="form" onSubmit={handleSubmit(onSubmit as any)}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Controller name="nome" control={control} render={({ field }) => (

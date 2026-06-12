@@ -116,7 +116,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                   sx={{ borderRadius: 2, mb: 0.3, py: 0.6, color: '#cbd5e1', '&:hover': { bgcolor: '#334155' }, '&.Mui-selected': { bgcolor: '#2563eb', color: '#fff', '&:hover': { bgcolor: '#1d4ed8' }, '& .MuiListItemIcon-root': { color: '#fff' } } }}
                 >
                   <ListItemIcon sx={{ minWidth: 36, fontSize: 20, color: '#64748b' }}>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.text} slotProps={{ primary: { fontSize: '0.88rem' } }} />
+                  <ListItemText primary={item.text} slotProps={{ primary: { sx: { fontSize: '0.88rem' } } }} />
                 </ListItemButton>
               ))}
             </List>
@@ -128,11 +128,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <ListItemButton component="a" href="/cardapio" target="_blank"
           sx={{ borderRadius: 2, color: '#cbd5e1', '&:hover': { bgcolor: '#334155' } }}>
           <ListItemIcon sx={{ minWidth: 36, color: '#64748b' }}><OpenInNew /></ListItemIcon>
-          <ListItemText primary="Cardápio Digital" slotProps={{ primary: { fontSize: '0.88rem' } }} />
+          <ListItemText primary="Cardápio Digital" slotProps={{ primary: { sx: { fontSize: '0.88rem' } } }} />
         </ListItemButton>
         <ListItemButton onClick={logout} sx={{ borderRadius: 2, color: '#cbd5e1', '&:hover': { bgcolor: '#334155' } }}>
           <ListItemIcon sx={{ minWidth: 36, color: '#64748b' }}><Logout /></ListItemIcon>
-          <ListItemText primary="Sair" slotProps={{ primary: { fontSize: '0.88rem' } }} />
+          <ListItemText primary="Sair" slotProps={{ primary: { sx: { fontSize: '0.88rem' } } }} />
         </ListItemButton>
       </List>
     </Box>

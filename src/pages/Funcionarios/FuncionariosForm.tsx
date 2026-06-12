@@ -20,7 +20,7 @@ export default function FuncionariosForm() {
   const [apiError, setApiError] = useState('');
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<FuncionarioFormData>({
-    resolver: zodResolver(funcionarioSchema),
+    resolver: zodResolver(funcionarioSchema) as any,
     defaultValues: { nome: '', usuario: '', senha: '', cargo: '', telefone: '', email: '', permissao: 'operador', ativo: true },
   });
 
@@ -35,7 +35,7 @@ export default function FuncionariosForm() {
     setSaving(true);
     setApiError('');
     try {
-      const clean = { ...data };
+      const clean = { ...data } as Omit<FuncionarioFormData, 'senha'> & { senha?: string };
       if (isEditing && !clean.senha) delete clean.senha;
       if (isEditing) {
         await updateFuncionario(Number(id), clean);
@@ -63,7 +63,7 @@ export default function FuncionariosForm() {
       {apiError && <Alert severity="error" sx={{ mb: 2 }}>{apiError}</Alert>}
       <Card>
         <CardContent>
-          <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+          <Box component="form" onSubmit={handleSubmit(onSubmit as any)}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Controller name="nome" control={control} render={({ field }) => (

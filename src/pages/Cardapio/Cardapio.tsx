@@ -1,4 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent } from 'react';
+import type { SelectChangeEvent } from '@mui/material/Select';
+
+type CheckoutFormState = {
+  nome: string; telefone: string; endereco: string; numero: string;
+  bairro: string; complemento: string; forma_pagamento: string;
+  troco_para: string; observacao: string;
+};
 import {
   Box, Typography, Card, CardContent, Grid, Button, IconButton, Drawer,
   Divider, Badge, Fab, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -72,7 +79,7 @@ export default function CardapioPage() {
         const items = JSON.parse(c);
         return items.map((i: CartItem) => ({
           ...i,
-          key: i.key || getCartKey(i.produto.id, i.adicionais || [], i.observacao || ''),
+          key: i.key || getCartKey(i.produto.id!, i.adicionais || [], i.observacao || ''),
           adicionais: i.adicionais || [],
           observacao: i.observacao || '',
         }));
@@ -126,10 +133,10 @@ export default function CardapioPage() {
     return deliveryConfig.horario_funcionamento || getConfig('horario_funcionamento', '');
   })();
 
-  const [form, setForm] = useState(() => {
+  const [form, setForm] = useState<CheckoutFormState>(() => {
     try {
       const saved = localStorage.getItem(CLIENTE_KEY);
-      if (saved) return { ...JSON.parse(saved), troco_para: '', observacao: '' };
+      if (saved) return { ...JSON.parse(saved), troco_para: '', observacao: '' } as CheckoutFormState;
     } catch { /* ignore */ }
     return { nome: '', telefone: '', endereco: '', numero: '', bairro: '', complemento: '',
       forma_pagamento: 'dinheiro', troco_para: '', observacao: '' };
@@ -591,22 +598,22 @@ export default function CardapioPage() {
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField fullWidth label="Seu Nome *" size="small" value={form.nome}
-              onChange={(e) => setForm((p) => ({ ...p, nome: e.target.value }))} />
+              onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((p) => ({ ...p, nome: e.target.value }))} />
             <TextField fullWidth label="Telefone / WhatsApp *" size="small" value={form.telefone}
-              onChange={(e) => setForm((p) => ({ ...p, telefone: e.target.value }))}
+              onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((p) => ({ ...p, telefone: e.target.value }))}
               placeholder="(11) 99999-8888" />
             <Box sx={{ display: 'flex', gap: 1 }}>
               <TextField fullWidth label="Endereço *" size="small" value={form.endereco}
-                onChange={(e) => setForm((p) => ({ ...p, endereco: e.target.value }))}
+                onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((p) => ({ ...p, endereco: e.target.value }))}
                 placeholder="Rua, Avenida..." sx={{ flex: 2 }} />
               <TextField fullWidth label="Número" size="small" value={form.numero}
-                onChange={(e) => setForm((p) => ({ ...p, numero: e.target.value }))} sx={{ flex: 1 }} />
+                onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((p) => ({ ...p, numero: e.target.value }))} sx={{ flex: 1 }} />
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Região de Entrega</InputLabel>
-                <Select value={regiaoId} label="Região de Entrega"
-                  onChange={(e) => {
+                <Select<number> value={regiaoId} label="Região de Entrega"
+                  onChange={(e: SelectChangeEvent<number>) => {
                     const id = Number(e.target.value);
                     setRegiaoId(id);
                     const reg = regioes.find((r) => r.id === id);
@@ -623,14 +630,14 @@ export default function CardapioPage() {
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <TextField fullWidth label="Bairro" size="small" value={form.bairro}
-                onChange={(e) => setForm((p) => ({ ...p, bairro: e.target.value }))} />
+                onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((p) => ({ ...p, bairro: e.target.value }))} />
               <TextField fullWidth label="Complemento" size="small" value={form.complemento}
-                onChange={(e) => setForm((p) => ({ ...p, complemento: e.target.value }))} />
+                onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((p) => ({ ...p, complemento: e.target.value }))} />
             </Box>
             <FormControl fullWidth size="small">
               <InputLabel>Forma de Pagamento</InputLabel>
               <Select value={form.forma_pagamento} label="Forma de Pagamento"
-                onChange={(e) => setForm((p) => ({ ...p, forma_pagamento: e.target.value }))}>
+                onChange={(e: SelectChangeEvent<string>) => setForm((p) => ({ ...p, forma_pagamento: e.target.value }))}>
                 <MenuItem value="dinheiro">Dinheiro</MenuItem>
                 <MenuItem value="cartao_credito">Cartão de Crédito</MenuItem>
                 <MenuItem value="cartao_debito">Cartão de Débito</MenuItem>
@@ -639,10 +646,10 @@ export default function CardapioPage() {
             </FormControl>
             {form.forma_pagamento === 'dinheiro' && (
               <TextField fullWidth label="Troco para quanto?" size="small" type="text" inputMode="decimal" value={form.troco_para}
-                onChange={(e) => setForm((p) => ({ ...p, troco_para: e.target.value }))} />
+                onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((p) => ({ ...p, troco_para: e.target.value }))} />
             )}
             <TextField fullWidth label="Observação" size="small" multiline rows={2} value={form.observacao}
-              onChange={(e) => setForm((p) => ({ ...p, observacao: e.target.value }))}
+              onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((p) => ({ ...p, observacao: e.target.value }))}
               placeholder="Alguma observação para o pedido?" />
           </Box>
         </DialogContent>

@@ -34,7 +34,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import { statusLabels, statusColors } from '../../constants/pedido';
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string;   icon: ReactNode }> = {
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string;   icon: React.ReactElement }> = {
   livre: {
     label: 'Livre', color: '#2E7D32', bg: 'linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)', border: '#4CAF50',
     icon: <CheckCircle sx={{ fontSize: 14 }} />,
@@ -105,7 +105,6 @@ export default function Mesas() {
   const [menuAnchor, setMenuAnchor] = useState<{ el: HTMLElement; numero: number } | null>(null);
 
   const [adicionais, setAdicionais] = useState<Adicional[]>([]);
-  const [categoriasAdicionais, setCategoriasAdicionais] = useState<CategoriaAdicional[]>([]);
   const [customizeProduto, setCustomizeProduto] = useState<Produto | null>(null);
   const [customizeQtd, setCustomizeQtd] = useState(1);
   const [selectedAdicionais, setSelectedAdicionais] = useState<Adicional[]>([]);
@@ -127,7 +126,6 @@ export default function Mesas() {
       setProdutos(prodRes.data.filter((p: Produto) => p.ativo !== false));
       setClientes(cliRes.data);
       const catAtivas = (catAdicRes.data || []).filter((c: CategoriaAdicional) => c.ativo !== false);
-      setCategoriasAdicionais(catAtivas);
       const todosAdicionais = (adicRes.data || []).filter((a: Adicional) => a.ativo !== false);
       const adicionaisComCat = todosAdicionais.map((a: Adicional) => {
         const cat = catAtivas.find((c: CategoriaAdicional) => c.id === a.categoria_id);
@@ -157,7 +155,6 @@ export default function Mesas() {
         if (!cancelled) setClientes(cliRes.data);
         if (!cancelled) {
           const catAtivas = (catAdicRes.data || []).filter((c: CategoriaAdicional) => c.ativo !== false);
-          setCategoriasAdicionais(catAtivas);
           const todosAdicionais = (adicRes.data || []).filter((a: Adicional) => a.ativo !== false);
           const adicionaisComCat = todosAdicionais.map((a: Adicional) => {
             const cat = catAtivas.find((c: CategoriaAdicional) => c.id === a.categoria_id);
@@ -596,12 +593,12 @@ export default function Mesas() {
                               Qtd: {item.quantidade} x R$ {item.preco_unitario.toFixed(2)}
                             </Typography>
                             {item.adicionais && item.adicionais.length > 0 && (
-                              <Typography variant="caption" display="block" color="primary.main" sx={{ fontWeight: 500 }}>
+                              <Typography variant="caption" color="primary.main" sx={{ fontWeight: 500, display: 'block' }}>
                                 + {item.adicionais.map((a) => a.nome).join(', ')}
                               </Typography>
                             )}
                             {item.observacao && (
-                              <Typography variant="caption" display="block" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', display: 'block' }}>
                                 Obs: {item.observacao}
                               </Typography>
                             )}
@@ -788,7 +785,7 @@ export default function Mesas() {
                     );
                   }
                   const grupos = groupAdicionaisByCategoria(disponiveis);
-                  const rows: JSX.Element[] = [];
+                  const rows: ReactNode[] = [];
                   for (const [catNome, adics] of grupos) {
                     rows.push(
                       <Box key={catNome}>

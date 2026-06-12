@@ -11,7 +11,7 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'Usuário e senha obrigatórios' });
   }
 
-  const funcionarios = getAll('funcionarios');
+  const funcionarios = await getAll('funcionarios');
   const user = funcionarios.find((f) => f.usuario === usuario);
 
   if (!user || !user.ativo) {

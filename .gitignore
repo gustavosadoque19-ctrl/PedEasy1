@@ -12,3 +12,12 @@ backend/data/*.json
 resumo-sessao.md
 temp_login.json
 AGENTS.md
+*.lnk
+backend/uploads/
+backend/.server.err
+whatsapp-bot/.wwebjs_cache/
+src/melhorias-pendentes.md
+api/node_modules
+api/package-lock.json
+
+.vercel

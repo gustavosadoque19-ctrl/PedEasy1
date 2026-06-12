@@ -15,7 +15,7 @@ export default function Pagamentos() {
   const [error, setError] = useState('');
   const [snack, setSnack] = useState('');
   const [open, setOpen] = useState(false);
-  const [cobranca, setCobranca] = useState({ pedido_id: '', valor: '', parcelas: '1', forma: 'pix' as const });
+  const [cobranca, setCobranca] = useState({ pedido_id: '', valor: '', parcelas: '1', forma: 'pix' });
 
   useEffect(() => {
     let cancelled = false;

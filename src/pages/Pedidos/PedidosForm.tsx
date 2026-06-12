@@ -30,7 +30,7 @@ export default function PedidosForm() {
   const [apiError, setApiError] = useState('');
 
   const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<PedidoFormData>({
-    resolver: zodResolver(pedidoSchema),
+    resolver: zodResolver(pedidoSchema) as any,
     defaultValues: {
       cliente_id: undefined, funcionario_id: user?.id || 0, tipo: 'mesa',
       mesa: '', status: 'aberto', forma_pagamento: 'dinheiro',
@@ -101,9 +101,9 @@ export default function PedidosForm() {
     setApiError('');
     try {
       if (isEditing) {
-        await updatePedido(Number(id), data);
+        await updatePedido(Number(id), data as any);
       } else {
-        await createPedido(data);
+        await createPedido(data as any);
       }
       navigate('/pedidos');
     } catch (err: unknown) {
@@ -128,7 +128,7 @@ export default function PedidosForm() {
       {errors.itens?.message && <Alert severity="warning" sx={{ mb: 2 }}>{errors.itens.message}</Alert>}
       <Card>
         <CardContent>
-          <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+          <Box component="form" onSubmit={handleSubmit(onSubmit as any)}>
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid size={{ xs: 12, md: 3 }}>
                 <Controller name="tipo" control={control} render={({ field }) => (

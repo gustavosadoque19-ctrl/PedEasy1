@@ -19,7 +19,7 @@ export default function ClientesForm() {
   const [apiError, setApiError] = useState('');
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<ClienteFormData>({
-    resolver: zodResolver(clienteSchema),
+    resolver: zodResolver(clienteSchema) as any,
     defaultValues: { nome: '', documento: '', telefone: '', email: '', endereco: '', observacao: '', ativo: true },
   });
 
@@ -59,7 +59,7 @@ export default function ClientesForm() {
       {apiError && <Alert severity="error" sx={{ mb: 2 }}>{apiError}</Alert>}
       <Card>
         <CardContent>
-          <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+          <Box component="form" onSubmit={handleSubmit(onSubmit as any)}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Controller name="nome" control={control} render={({ field }) => (

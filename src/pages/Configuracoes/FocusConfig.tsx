@@ -10,7 +10,7 @@ export default function FocusConfig() {
 
   useEffect(() => {
     let cancelled = false;
-    getFocusConfig().then((res) => { if (!cancelled) setConfig(res.data); }).catch(() => { if (!cancelled) setError('Erro ao carregar config'); }).finally(() => { if (!cancelled) setLoading(false); });
+    getFocusConfig().then((res) => { if (!cancelled) setConfig(res.data as FocusConfigType); }).catch(() => { if (!cancelled) setError('Erro ao carregar config'); }).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
 

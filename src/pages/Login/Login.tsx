@@ -9,7 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 function MobileLogin() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
-  const [serverUrl, setServerUrl] = useState(localStorage.getItem('server_url') || 'http://localhost:3000/api');
+  const [serverUrl, setServerUrl] = useState(localStorage.getItem('server_url') || '/api');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, loginDev } = useAuth();
@@ -60,7 +60,9 @@ function MobileLogin() {
 function DesktopLogin() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
-  const [serverUrl, setServerUrl] = useState(localStorage.getItem('server_url') || 'http://localhost:3000/api');
+  const storedUrl = localStorage.getItem('server_url');
+  const defaultUrl = (storedUrl && !(storedUrl.includes('localhost') && typeof window !== 'undefined' && !window.location.hostname.includes('localhost'))) ? storedUrl : '/api';
+  const [serverUrl, setServerUrl] = useState(defaultUrl);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, loginDev } = useAuth();
@@ -180,7 +182,7 @@ function DesktopLogin() {
             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
               Servidor
             </Typography>
-            <TextField fullWidth size="small" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} sx={{ mb: 2.5 }} placeholder="http://localhost:3000/api" />
+            <TextField fullWidth size="small" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} sx={{ mb: 2.5 }} placeholder="/api" />
             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
               Usuário
             </Typography>

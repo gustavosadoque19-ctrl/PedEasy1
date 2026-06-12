@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { getAll, create } from '../store.js';
-import { generateToken } from '../auth.js';
+import { getAll, create, update } from '../store.js';
+import { generateToken, authMiddleware } from '../auth.js';
 
 const router = Router();
 
@@ -14,8 +14,12 @@ router.post('/login', async (req, res) => {
   const funcionarios = await getAll('funcionarios');
   const user = funcionarios.find((f) => f.usuario === usuario);
 
-  if (!user || !user.ativo) {
+  if (!user) {
     return res.status(401).json({ error: 'Credenciais inválidas' });
+  }
+
+  if (!user.ativo) {
+    return res.status(403).json({ error: 'Conta aguardando aprovação do administrador' });
   }
 
   const senhaValida = await bcrypt.compare(senha, user.senha);
@@ -48,16 +52,34 @@ router.post('/register', async (req, res) => {
   }
 
   const senhaHash = await bcrypt.hash(senha, 10);
-  const novo = await create('funcionarios', {
+  await create('funcionarios', {
     nome, usuario, senha: senhaHash,
     cargo: cargo || 'Atendente',
     telefone: telefone || '',
     email: email || '',
     permissao: 'funcionario',
-    ativo: true,
+    ativo: false,
   });
 
-  res.status(201).json({ message: 'Cadastro realizado com sucesso' });
+  res.status(201).json({ message: 'Cadastro realizado! Aguarde aprovação do administrador.' });
+});
+
+router.get('/pendentes', authMiddleware, async (req, res) => {
+  if (req.user.permissao !== 'admin') {
+    return res.status(403).json({ error: 'Apenas administradores' });
+  }
+  const funcionarios = await getAll('funcionarios');
+  const pendentes = funcionarios.filter((f) => !f.ativo);
+  res.json(pendentes);
+});
+
+router.put('/aprovar/:id', authMiddleware, async (req, res) => {
+  if (req.user.permissao !== 'admin') {
+    return res.status(403).json({ error: 'Apenas administradores' });
+  }
+  const updated = await update('funcionarios', Number(req.params.id), { ativo: true });
+  if (!updated) return res.status(404).json({ error: 'Funcionário não encontrado' });
+  res.json(updated);
 });
 
 export default router;

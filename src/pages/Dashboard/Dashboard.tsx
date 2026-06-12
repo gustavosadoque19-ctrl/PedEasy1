@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Grid, Card, CardContent, Typography, Box, CircularProgress, Button, Chip, IconButton,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert,
 } from '@mui/material';
 import AddShoppingCart from '@mui/icons-material/AddShoppingCart';
 import Schedule from '@mui/icons-material/Schedule';
@@ -12,6 +12,7 @@ import CheckCircle from '@mui/icons-material/CheckCircle';
 import { getPedidos, updatePedido } from '../../api/pedidos';
 import { Pedido } from '../../types';
 import { notificarCliente } from '../../api/notificacao';
+import { getPendentes } from '../../api/funcionarios';
 
 const DEFAULT_LIMIT = 30;
 const PRONTO_LIMIT_MINUTES = 15;
@@ -41,8 +42,11 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendentesCount, setPendentesCount] = useState(0);
   const [openConfig, setOpenConfig] = useState(false);
   const [tempoLimite, setTempoLimite] = useState(String(getLimite()));
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = user.permissao === 'admin';
 
   useEffect(() => {
     let cancelled = false;
@@ -56,8 +60,11 @@ export default function Dashboard() {
         if (!cancelled) setLoading(false);
       }
     })();
+    if (isAdmin) {
+      getPendentes().then((res) => { if (!cancelled) setPendentesCount(res.data.length); }).catch(() => {});
+    }
     return () => { cancelled = true; };
-  }, []);
+  }, [isAdmin]);
 
   const getCardData = (key: string): Pedido[] => {
     if (key === 'atrasado') return pedidos.filter(isAtrasado);
@@ -102,6 +109,15 @@ export default function Dashboard() {
           Pedido Fácil
         </Button>
       </Box>
+      {isAdmin && pendentesCount > 0 && (
+        <Alert severity="info" sx={{ mb: 2 }} action={
+          <Button size="small" color="inherit" onClick={() => navigate('/funcionarios')}>
+            Gerenciar
+          </Button>
+        }>
+          <strong>{pendentesCount}</strong> funcionário(s) aguardando aprovação
+        </Alert>
+      )}
       <Grid container spacing={2}>
         {columns.map((col) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={col.key}>

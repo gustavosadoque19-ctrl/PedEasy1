@@ -6,3 +6,5 @@ export const getFuncionario = (id: number) => api.get<Funcionario>(`/funcionario
 export const createFuncionario = (data: Omit<Funcionario, 'id' | 'createdAt'>) => api.post<Funcionario>('/funcionarios', data);
 export const updateFuncionario = (id: number, data: Partial<Funcionario>) => api.put<Funcionario>(`/funcionarios/${id}`, data);
 export const deleteFuncionario = (id: number) => api.delete(`/funcionarios/${id}`);
+export const getPendentes = () => api.get<Funcionario[]>('/auth/pendentes');
+export const aprovarFuncionario = (id: number) => api.put<Funcionario>(`/auth/aprovar/${id}`);

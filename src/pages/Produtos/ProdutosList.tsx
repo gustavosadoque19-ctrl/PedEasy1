@@ -111,7 +111,7 @@ export default function ProdutosList() {
                       </TableCell>
                       <TableCell>{p.nome}</TableCell>
                       <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{p.categoria}</TableCell>
-                      <TableCell>R$ {p.preco_venda.toFixed(2)}</TableCell>
+                      <TableCell>R$ {(p.preco_venda ?? 0).toFixed(2)}</TableCell>
                       <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                         <Chip label={`${p.estoque_atual} ${p.unidade}`} size="small"
                           color={p.estoque_atual <= p.estoque_minimo ? 'warning' : 'success'} />

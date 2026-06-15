@@ -152,7 +152,7 @@ export default function Dashboard() {
                           </Typography>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
                             <Typography variant="caption" color="text.secondary">{pedido.funcionario_nome}</Typography>
-                            <Typography variant="subtitle2" color="primary.main">R$ {pedido.valor_total.toFixed(2)}</Typography>
+                            <Typography variant="subtitle2" color="primary.main">R$ {(pedido.valor_total ?? 0).toFixed(2)}</Typography>
                           </Box>
                         </CardContent>
                         {col.key === 'aberto' && (

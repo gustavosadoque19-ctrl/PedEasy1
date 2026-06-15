@@ -139,7 +139,7 @@ export default function NFeList() {
                       <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 12, display: { xs: 'none', md: 'table-cell' } }}>
                         {nfe.chave_acesso || '-'}
                       </TableCell>
-                      <TableCell>R$ {nfe.valor.toFixed(2)}</TableCell>
+                      <TableCell>R$ {(nfe.valor ?? 0).toFixed(2)}</TableCell>
                       <TableCell>
                         <Chip label={nfe.status} size="small" color={statusColors[nfe.status] || 'default'} />
                       </TableCell>

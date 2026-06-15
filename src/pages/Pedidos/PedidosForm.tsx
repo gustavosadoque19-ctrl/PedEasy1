@@ -188,7 +188,7 @@ export default function PedidosForm() {
                               error={!!errors.itens?.[index]?.produto_id}
                               helperText={errors.itens?.[index]?.produto_id?.message}>
                               {produtos.filter((p) => p.ativo).map((p) => (
-                                <MenuItem key={p.id} value={p.id!}>{p.nome} - R$ {p.preco_venda.toFixed(2)}</MenuItem>
+                                <MenuItem key={p.id} value={p.id!}>{p.nome} - R$ {(p.preco_venda ?? 0).toFixed(2)}</MenuItem>
                               ))}
                             </TextField>
                           )} />

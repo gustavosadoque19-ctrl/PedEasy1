@@ -39,11 +39,11 @@ export default function Relatorios() {
       startY: 48,
       head: [['Métrica', 'Valor']],
       body: [
-        ['Total de Vendas', `R$ ${relatorio.total_vendas.toFixed(2)}`],
-        ['Total Recebido', `R$ ${relatorio.total_recebido.toFixed(2)}`],
-        ['Descontos', `R$ ${relatorio.total_descontos.toFixed(2)}`],
+        ['Total de Vendas', `R$ ${(relatorio.total_vendas ?? 0).toFixed(2)}`],
+        ['Total Recebido', `R$ ${(relatorio.total_recebido ?? 0).toFixed(2)}`],
+        ['Descontos', `R$ ${(relatorio.total_descontos ?? 0).toFixed(2)}`],
         ['Qtd. Pedidos', String(relatorio.quantidade_pedidos)],
-        ['Ticket Médio', `R$ ${relatorio.ticket_medio.toFixed(2)}`],
+        ['Ticket Médio', `R$ ${(relatorio.ticket_medio ?? 0).toFixed(2)}`],
       ],
       theme: 'grid',
       headStyles: { fillColor: [25, 118, 210] },
@@ -54,7 +54,7 @@ export default function Relatorios() {
     autoTable(doc, {
       startY: lastY + 10,
       head: [['Forma de Pagamento', 'Total']],
-      body: relatorio.vendas_por_forma_pagamento.map((v) => [v.forma, `R$ ${v.total.toFixed(2)}`]),
+      body: relatorio.vendas_por_forma_pagamento.map((v) => [v.forma, `R$ ${(v.total ?? 0).toFixed(2)}`]),
       theme: 'grid',
       headStyles: { fillColor: [25, 118, 210] },
     });
@@ -64,7 +64,7 @@ export default function Relatorios() {
     autoTable(doc, {
       startY: lastY2 + 10,
       head: [['Produto', 'Quantidade', 'Total']],
-      body: relatorio.produtos_mais_vendidos.map((p) => [p.produto, String(p.quantidade), `R$ ${p.total.toFixed(2)}`]),
+      body: relatorio.produtos_mais_vendidos.map((p) => [p.produto, String(p.quantidade), `R$ ${(p.total ?? 0).toFixed(2)}`]),
       theme: 'grid',
       headStyles: { fillColor: [25, 118, 210] },
     });
@@ -148,19 +148,19 @@ export default function Relatorios() {
             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <Card><CardContent>
                 <Typography variant="body2" color="text.secondary">Total de Vendas</Typography>
-                <Typography variant="h5">R$ {relatorio.total_vendas.toFixed(2)}</Typography>
+                <Typography variant="h5">R$ {(relatorio.total_vendas ?? 0).toFixed(2)}</Typography>
               </CardContent></Card>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <Card><CardContent>
                 <Typography variant="body2" color="text.secondary">Total Recebido</Typography>
-                <Typography variant="h5">R$ {relatorio.total_recebido.toFixed(2)}</Typography>
+                <Typography variant="h5">R$ {(relatorio.total_recebido ?? 0).toFixed(2)}</Typography>
               </CardContent></Card>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <Card><CardContent>
                 <Typography variant="body2" color="text.secondary">Descontos</Typography>
-                <Typography variant="h5">R$ {relatorio.total_descontos.toFixed(2)}</Typography>
+                <Typography variant="h5">R$ {(relatorio.total_descontos ?? 0).toFixed(2)}</Typography>
               </CardContent></Card>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
@@ -172,7 +172,7 @@ export default function Relatorios() {
             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <Card><CardContent>
                 <Typography variant="body2" color="text.secondary">Ticket Médio</Typography>
-                <Typography variant="h5">R$ {relatorio.ticket_medio.toFixed(2)}</Typography>
+                <Typography variant="h5">R$ {(relatorio.ticket_medio ?? 0).toFixed(2)}</Typography>
               </CardContent></Card>
             </Grid>
           </Grid>
@@ -190,7 +190,7 @@ export default function Relatorios() {
                   </TableHead>
                   <TableBody>
                     {relatorio.vendas_por_forma_pagamento.map((v, i) => (
-                      <TableRow key={i}><TableCell>{v.forma}</TableCell><TableCell align="right">R$ {v.total.toFixed(2)}</TableCell></TableRow>
+                      <TableRow key={i}><TableCell>{v.forma}</TableCell><TableCell align="right">R$ {(v.total ?? 0).toFixed(2)}</TableCell></TableRow>
                     ))}
                   </TableBody>
                 </Table>
@@ -215,7 +215,7 @@ export default function Relatorios() {
                       <TableRow key={i}>
                         <TableCell>{p.produto}</TableCell>
                         <TableCell align="right">{p.quantidade}</TableCell>
-                        <TableCell align="right">R$ {p.total.toFixed(2)}</TableCell>
+                        <TableCell align="right">R$ {(p.total ?? 0).toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

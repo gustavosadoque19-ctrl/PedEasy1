@@ -119,7 +119,7 @@ export default function CaixaDashboard() {
             <Grid size={{ xs: 12, md: 3 }}>
               <Card><CardContent>
                 <Typography variant="body2" color="text.secondary">Saldo Inicial</Typography>
-                <Typography variant="h6">R$ {caixaAberto.saldo_inicial.toFixed(2)}</Typography>
+                <Typography variant="h6">R$ {(caixaAberto.saldo_inicial ?? 0).toFixed(2)}</Typography>
               </CardContent></Card>
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
@@ -138,7 +138,7 @@ export default function CaixaDashboard() {
               <Card><CardContent>
                 <Typography variant="body2" color="text.secondary">Saldo Atual</Typography>
                 <Typography variant="h6" color="primary.main">
-                  R$ {(caixaAberto.saldo_inicial + totalEntradas - totalSaidas).toFixed(2)}
+                  R$ {((caixaAberto.saldo_inicial ?? 0) + totalEntradas - totalSaidas).toFixed(2)}
                 </Typography>
               </CardContent></Card>
             </Grid>
@@ -169,7 +169,7 @@ export default function CaixaDashboard() {
                           <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{m.categoria}</TableCell>
                           <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{m.descricao}</TableCell>
                           <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{m.forma_pagamento}</TableCell>
-                          <TableCell align="right">R$ {m.valor.toFixed(2)}</TableCell>
+                          <TableCell align="right">R$ {(m.valor ?? 0).toFixed(2)}</TableCell>
                         </TableRow>
                       ))}
                   </TableBody>
@@ -241,7 +241,7 @@ export default function CaixaDashboard() {
       <Dialog open={openFechar} onClose={() => setOpenFechar(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Fechar Caixa</DialogTitle>
         <DialogContent>
-          <Typography>Saldo atual: R$ {(caixaAberto ? caixaAberto.saldo_inicial + totalEntradas - totalSaidas : 0).toFixed(2)}</Typography>
+          <Typography>Saldo atual: R$ {(caixaAberto ? (caixaAberto.saldo_inicial ?? 0) + totalEntradas - totalSaidas : 0).toFixed(2)}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Deseja realmente fechar o caixa?</Typography>
         </DialogContent>
         <DialogActions>

@@ -167,7 +167,7 @@ export default function AdicionaisConfig() {
             {adicionais.map((a) => (
               <TableRow key={a.id}>
                 <TableCell>{a.nome}</TableCell>
-                <TableCell>R$ {a.preco.toFixed(2)}</TableCell>
+                <TableCell>R$ {(a.preco ?? 0).toFixed(2)}</TableCell>
                 <TableCell>{categorias.find((c) => c.id === a.categoria_id)?.nome || '-'}</TableCell>
                 <TableCell>{a.ativo ? 'Sim' : 'Não'}</TableCell>
                 <TableCell align="right">

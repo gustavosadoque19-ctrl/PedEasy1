@@ -105,7 +105,7 @@ export default function MeusPedidos() {
                       <Chip label={p.tipo === 'mesa' ? `Mesa ${p.mesa}` : p.tipo} size="small" variant="outlined" />
                     </TableCell>
                     <TableCell>{p.cliente_nome || '-'}</TableCell>
-                    <TableCell>R$ {p.valor_total.toFixed(2)}</TableCell>
+                    <TableCell>R$ {(p.valor_total ?? 0).toFixed(2)}</TableCell>
                     <TableCell>
                       <Chip label={statusLabels[p.status]} size="small" color={statusColors[p.status]} />
                     </TableCell>

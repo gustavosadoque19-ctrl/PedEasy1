@@ -473,7 +473,7 @@ export default function Mesas() {
                         <Chip label={statusLabels[pedido.status]} size="small" color={statusColors[pedido.status]}
                           sx={{ height: 20, '& .MuiChip-label': { fontSize: '0.65rem', px: 0.5 } }} />
                         <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main', mt: 0.5 }}>
-                          R$ {pedido.valor_total.toFixed(2)}
+                          R$ {(pedido.valor_total ?? 0).toFixed(2)}
                         </Typography>
                         {nextAct && (
                           <Button fullWidth size="small" variant="contained" color={nextAct.color}
@@ -530,7 +530,7 @@ export default function Mesas() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Total:</Typography>
                   <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                    R$ {selectedPedido.valor_total.toFixed(2)}
+                    R$ {(selectedPedido.valor_total ?? 0).toFixed(2)}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -590,7 +590,7 @@ export default function Mesas() {
                               {item.produto_nome}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              Qtd: {item.quantidade} x R$ {item.preco_unitario.toFixed(2)}
+                              Qtd: {item.quantidade} x R$ {(item.preco_unitario ?? 0).toFixed(2)}
                             </Typography>
                             {item.adicionais && item.adicionais.length > 0 && (
                               <Typography variant="caption" color="primary.main" sx={{ fontWeight: 500, display: 'block' }}>
@@ -605,7 +605,7 @@ export default function Mesas() {
                           </Box>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <Typography variant="body2" sx={{ fontWeight: 600, mr: 0.5 }}>
-                              R$ {(item.total || item.quantidade * item.preco_unitario).toFixed(2)}
+                              R$ {((item.total ?? 0) || item.quantidade * (item.preco_unitario ?? 0)).toFixed(2)}
                             </Typography>
                             {selectedPedido.status !== 'fechado' && selectedPedido.status !== 'cancelado' && (
                               <IconButton size="small" aria-label="Remover item" color="error" onClick={() => setItemToRemove(i)} sx={{ p: 0.3 }}>
@@ -702,7 +702,7 @@ export default function Mesas() {
               }}>
                 <Box sx={{ flex: 1 }} onClick={() => setAddQtd((prev) => ({ ...prev, [p.id!]: (prev[p.id!] || 0) + 1 }))}>
                   <Typography variant="body2" sx={{ fontWeight: 500 }}>{p.nome}</Typography>
-                  <Typography variant="caption" color="text.secondary">R$ {p.preco_venda.toFixed(2)}</Typography>
+                  <Typography variant="caption" color="text.secondary">R$ {(p.preco_venda ?? 0).toFixed(2)}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 1 }}>
                   {addQtd[p.id!] ? (
@@ -753,7 +753,7 @@ export default function Mesas() {
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    R$ {customizeProduto.preco_venda.toFixed(2)}
+                    R$ {(customizeProduto.preco_venda ?? 0).toFixed(2)}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <IconButton size="small" onClick={() => setCustomizeQtd((q) => Math.max(1, q - 1))}>
@@ -815,7 +815,7 @@ export default function Mesas() {
                                   <Typography variant="body2">{a.nome}</Typography>
                                 </Box>
                                 <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                                  +R$ {a.preco.toFixed(2)}
+                                  +R$ {(a.preco ?? 0).toFixed(2)}
                                 </Typography>
                               </Box>
                             );
@@ -838,7 +838,7 @@ export default function Mesas() {
                 }}>
                   <Typography variant="body2" color="text.secondary">Total do item</Typography>
                   <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                    R$ {((customizeProduto.preco_venda + selectedAdicionais.reduce((s, a) => s + a.preco, 0)) * customizeQtd).toFixed(2)}
+                    R$ {(((customizeProduto.preco_venda ?? 0) + selectedAdicionais.reduce((s, a) => s + (a.preco ?? 0), 0)) * customizeQtd).toFixed(2)}
                   </Typography>
                 </Box>
               </Box>

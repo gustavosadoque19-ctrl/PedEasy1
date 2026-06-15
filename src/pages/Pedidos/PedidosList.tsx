@@ -105,7 +105,7 @@ export default function PedidosList() {
                 </Box>
                 <Box sx={{ mt: 1 }}>
                   <Typography variant="body2">Funcionário: {pedido.funcionario_nome}</Typography>
-                  <Typography variant="h6" color="primary.main">R$ {pedido.valor_total.toFixed(2)}</Typography>
+                  <Typography variant="h6" color="primary.main">R$ {(pedido.valor_total ?? 0).toFixed(2)}</Typography>
                 </Box>
               </CardContent>
             </Card>

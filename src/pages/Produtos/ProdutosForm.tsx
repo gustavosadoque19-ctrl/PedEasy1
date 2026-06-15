@@ -182,7 +182,7 @@ export default function ProdutosForm() {
                         </Box>
                       )}>
                       {adicionais.map((a) => (
-                        <MenuItem key={a.id} value={a.id!}>{a.nome} — R$ {a.preco.toFixed(2)}</MenuItem>
+                        <MenuItem key={a.id} value={a.id!}>{a.nome} — R$ {(a.preco ?? 0).toFixed(2)}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>

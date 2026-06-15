@@ -79,7 +79,7 @@ export default function Pagamentos() {
           <Card><CardContent>
             <Typography variant="body2" color="text.secondary">Total Recebido</Typography>
             <Typography variant="h5">
-              R$ {pagamentos.filter((p) => p.status === 'aprovado').reduce((s, p) => s + p.valor, 0).toFixed(2)}
+              R$ {pagamentos.filter((p) => p.status === 'aprovado').reduce((s, p) => s + (p.valor ?? 0), 0).toFixed(2)}
             </Typography>
           </CardContent></Card>
         </Grid>
@@ -124,7 +124,7 @@ export default function Pagamentos() {
                   {pagamentos.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>#{p.pedido_id}</TableCell>
-                      <TableCell>R$ {p.valor.toFixed(2)}</TableCell>
+                      <TableCell>R$ {(p.valor ?? 0).toFixed(2)}</TableCell>
                       <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                         <Chip icon={p.forma === 'pix' ? <Pix /> : <CreditCard />}
                           label={p.forma === 'pix' ? 'PIX' : p.forma === 'cartao_credito' ? 'Crédito' : 'Débito'}

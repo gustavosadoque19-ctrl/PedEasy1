@@ -132,17 +132,17 @@ export default function PedidosView() {
               <Grid container spacing={2}>
                 <Grid size={12}>
                   <Typography variant="body2" color="text.secondary">Valor Total</Typography>
-                  <Typography variant="h4" color="primary.main">R$ {pedido.valor_total.toFixed(2)}</Typography>
+                  <Typography variant="h4" color="primary.main">R$ {(pedido.valor_total ?? 0).toFixed(2)}</Typography>
                 </Grid>
                 {pedido.desconto > 0 && (
                   <Grid size={6}>
                     <Typography variant="body2" color="text.secondary">Desconto</Typography>
-                    <Typography variant="body1" color="error.main">- R$ {pedido.desconto.toFixed(2)}</Typography>
+                    <Typography variant="body1" color="error.main">- R$ {(pedido.desconto ?? 0).toFixed(2)}</Typography>
                   </Grid>
                 )}
                 <Grid size={6}>
                   <Typography variant="body2" color="text.secondary">Valor Final</Typography>
-                  <Typography variant="h5" color="success.main">R$ {(pedido.valor_total - pedido.desconto).toFixed(2)}</Typography>
+                  <Typography variant="h5" color="success.main">R$ {((pedido.valor_total ?? 0) - (pedido.desconto ?? 0)).toFixed(2)}</Typography>
                 </Grid>
               </Grid>
               <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
@@ -185,8 +185,8 @@ export default function PedidosView() {
                         </TableCell>
                         <TableCell>{item.observacao || '-'}</TableCell>
                         <TableCell align="right">{item.quantidade}</TableCell>
-                        <TableCell align="right">R$ {item.preco_unitario.toFixed(2)}</TableCell>
-                        <TableCell align="right">R$ {item.total.toFixed(2)}</TableCell>
+                        <TableCell align="right">R$ {(item.preco_unitario ?? 0).toFixed(2)}</TableCell>
+                        <TableCell align="right">R$ {(item.total ?? 0).toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -222,7 +222,7 @@ export default function PedidosView() {
             Emitir Nota Fiscal Eletrônica para o <strong>Pedido Nº {pedido.id}</strong>?
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Valor: R$ {(pedido.valor_total - pedido.desconto).toFixed(2)}
+            Valor: R$ {((pedido.valor_total ?? 0) - (pedido.desconto ?? 0)).toFixed(2)}
           </Typography>
         </DialogContent>
         <DialogActions>

@@ -401,7 +401,7 @@ export default function CardapioDigital() {
                         <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
                           <Typography variant="subtitle2">{p.nome}</Typography>
                           <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                            R$ {p.preco_venda.toFixed(2)}
+                            R$ {(p.preco_venda ?? 0).toFixed(2)}
                           </Typography>
                         </CardContent>
                       </Card>
@@ -433,7 +433,7 @@ export default function CardapioDigital() {
                       <Typography variant="body2">{p.nome}</Typography>
                       {p.descricao && <Typography variant="caption" color="text.secondary">{p.descricao}</Typography>}
                     </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>R$ {p.preco_venda.toFixed(2)}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>R$ {(p.preco_venda ?? 0).toFixed(2)}</Typography>
                   </Box>
                 ))}
               </Box>

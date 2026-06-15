@@ -364,7 +364,7 @@ export default function CardapioPage() {
                           )}
                         </Box>
                         <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem' }}>{p.nome}</Typography>
-                        <Typography variant="body2" color="primary" sx={{ fontWeight: 700 }}>R$ {p.preco_venda.toFixed(2)}</Typography>
+                        <Typography variant="body2" color="primary" sx={{ fontWeight: 700 }}>R$ {(p.preco_venda ?? 0).toFixed(2)}</Typography>
                       </CardContent>
                     </Card>
                   </Grid>
@@ -403,7 +403,7 @@ export default function CardapioPage() {
                       </Typography>
                     )}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
-                      <Typography variant="body2" color="primary" sx={{ fontWeight: 700 }}>R$ {p.preco_venda.toFixed(2)}</Typography>
+                      <Typography variant="body2" color="primary" sx={{ fontWeight: 700 }}>R$ {(p.preco_venda ?? 0).toFixed(2)}</Typography>
                       <IconButton size="small" color="primary" aria-label="Adicionar" onClick={() => addToCart(p)} sx={{ bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' } }}>
                         <Add sx={{ fontSize: 18 }} />
                       </IconButton>
@@ -523,7 +523,7 @@ export default function CardapioPage() {
               <Box>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{customizeProduto.nome}</Typography>
                 <Typography variant="caption" color="primary" sx={{ fontWeight: 600 }}>
-                  Base: R$ {customizeProduto.preco_venda.toFixed(2)}
+                  Base: R$ {(customizeProduto.preco_venda ?? 0).toFixed(2)}
                 </Typography>
               </Box>
             </DialogTitle>
@@ -557,7 +557,7 @@ export default function CardapioPage() {
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: 1 }}>
                                   <Typography variant="body2">{a.nome}</Typography>
                                   <Typography variant="body2" color="primary" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
-                                    +R$ {a.preco.toFixed(2)}
+                                    +R$ {(a.preco ?? 0).toFixed(2)}
                                   </Typography>
                                 </Box>
                               }
@@ -578,7 +578,7 @@ export default function CardapioPage() {
               <Box sx={{ bgcolor: '#f1f5f9', borderRadius: 2, p: 1.5, mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>Total do item</Typography>
                 <Typography variant="body1" color="primary" sx={{ fontWeight: 800 }}>
-                  R$ {(customizeProduto.preco_venda + customizeProduto.adicionais_disponiveis.filter((a) => selectedAdicionais.includes(a.id!)).reduce((s, a) => s + a.preco, 0)).toFixed(2)}
+                  R$ {((customizeProduto.preco_venda ?? 0) + customizeProduto.adicionais_disponiveis.filter((a) => selectedAdicionais.includes(a.id!)).reduce((s, a) => s + (a.preco ?? 0), 0)).toFixed(2)}
                 </Typography>
               </Box>
             </DialogContent>
@@ -622,7 +622,7 @@ export default function CardapioPage() {
                   <MenuItem value={0}>Sem região definida</MenuItem>
                   {regioes.filter((r) => r.ativo).map((r) => (
                     <MenuItem key={r.id} value={r.id}>
-                      {r.nome} — R$ {r.valor.toFixed(2)}
+                      {r.nome} — R$ {(r.valor ?? 0).toFixed(2)}
                     </MenuItem>
                   ))}
                 </Select>
@@ -681,7 +681,7 @@ export default function CardapioPage() {
               <Box key={i} sx={{ mb: 0.5 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2">{item.quantidade}x {item.produto_nome}</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>R$ {(item.total || item.quantidade * item.preco_unitario).toFixed(2)}</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>                R$ {((item.total ?? 0) || item.quantidade * (item.preco_unitario ?? 0)).toFixed(2)}</Typography>
                 </Box>
                 {item.adicionais && item.adicionais.length > 0 && (
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', pl: 2 }}>

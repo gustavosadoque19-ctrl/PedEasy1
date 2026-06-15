@@ -169,7 +169,7 @@ export default function RegioesAtendimento() {
                           <MyLocation sx={{ fontSize: 14, ml: 0.5, color: 'primary.main', verticalAlign: 'middle' }} />
                         )}
                       </TableCell>
-                      <TableCell>R$ {r.valor.toFixed(2)}</TableCell>
+                      <TableCell>R$ {(r.valor ?? 0).toFixed(2)}</TableCell>
                       <TableCell>
                         <Switch size="small" checked={r.ativo} onChange={() => toggleAtivo(r.id)} />
                       </TableCell>

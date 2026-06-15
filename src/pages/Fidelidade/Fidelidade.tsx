@@ -111,9 +111,9 @@ export default function Fidelidade() {
                         <TableCell align="right">
                           <Chip label={`${c.pontos} pts`} color="warning" size="small" />
                         </TableCell>
-                        <TableCell align="right">R$ {c.total_gasto.toFixed(2)}</TableCell>
+                        <TableCell align="right">R$ {(c.total_gasto ?? 0).toFixed(2)}</TableCell>
                         <TableCell align="right">
-                          R$ {(c.pontos * config.valor_resgate_por_ponto).toFixed(2)}
+                          R$ {((c.pontos ?? 0) * (config.valor_resgate_por_ponto ?? 0)).toFixed(2)}
                         </TableCell>
                       </TableRow>
                     ))}

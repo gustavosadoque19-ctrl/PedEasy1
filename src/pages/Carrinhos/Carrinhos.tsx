@@ -99,7 +99,7 @@ export default function Carrinhos() {
                     <TableRow key={c.id}>
                       <TableCell>{c.cliente_nome || 'Visitante'}</TableCell>
                       <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{c.cliente_telefone || '-'}</TableCell>
-                      <TableCell align="right">R$ {c.valor_total.toFixed(2)}</TableCell>
+                      <TableCell align="right">R$ {(c.valor_total ?? 0).toFixed(2)}</TableCell>
                       <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{c.itens?.length || 0} itens</TableCell>
                       <TableCell>
                         <Chip label={c.status} color={statusColor[c.status] || 'default'} size="small" />

@@ -135,7 +135,7 @@ export default function Cupons() {
                         </Box>
                       </TableCell>
                       <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{c.tipo === 'percentual' ? '%' : 'R$'}</TableCell>
-                      <TableCell>{c.tipo === 'percentual' ? `${c.valor}%` : `R$ ${c.valor.toFixed(2)}`}</TableCell>
+                      <TableCell>{c.tipo === 'percentual' ? `${c.valor}%` : `R$ ${(c.valor ?? 0).toFixed(2)}`}</TableCell>
                       <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{c.usos_atuais}/{c.uso_maximo}</TableCell>
                       <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{c.expiracao ? new Date(c.expiracao).toLocaleDateString() : '-'}</TableCell>
                       <TableCell>

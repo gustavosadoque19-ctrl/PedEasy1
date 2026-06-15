@@ -6,7 +6,22 @@ import { generateToken, authMiddleware } from '../auth.js';
 const router = Router();
 
 router.post('/login', async (req, res) => {
-  const { usuario, senha } = req.body;
+  const { usuario, senha, email } = req.body;
+
+  if (email) {
+    const { default: saasRouter } = await import('./saas.js');
+    const subReq = { body: { email, senha: senha || req.body.senha } };
+    const subRes = {
+      status(code) { this.statusCode = code; return this; },
+      json(data) { this.body = data; },
+      statusCode: null, body: null,
+    };
+    await saasRouter.handle({ method: 'POST', url: '/login', body: subReq.body }, subRes, () => {});
+    if (subRes.statusCode === 200) {
+      return res.status(200).json(subRes.body);
+    }
+  }
+
   if (!usuario || !senha) {
     return res.status(400).json({ error: 'Usuário e senha obrigatórios' });
   }

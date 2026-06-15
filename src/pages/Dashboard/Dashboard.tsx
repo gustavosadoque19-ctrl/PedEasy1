@@ -43,6 +43,13 @@ export default function Dashboard() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendentesCount, setPendentesCount] = useState(0);
+  const tenant = JSON.parse(localStorage.getItem('tenant') || '{}');
+  const onboarding = tenant?.config?.onboarding;
+  useEffect(() => {
+    if (tenant?.id && !onboarding?.completed) {
+      navigate('/app/onboarding', { replace: true });
+    }
+  }, [tenant, onboarding, navigate]);
   const [openConfig, setOpenConfig] = useState(false);
   const [tempoLimite, setTempoLimite] = useState(String(getLimite()));
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -75,7 +82,7 @@ export default function Dashboard() {
 
   const handleStatusChange = async (pedido: Pedido, status: string) => {
     try {
-      await updatePedido(pedido.id!, { ...pedido, status: status as Pedido['status'] });
+      await updatePedido(pedido.id!, { status: status as Pedido['status'] });
       if (status === 'pronto' && pedido.cliente_telefone) {
         notificarCliente(pedido.id!, pedido.cliente_telefone).catch(() => {});
       }

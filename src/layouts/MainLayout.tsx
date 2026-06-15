@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { Box, AppBar, Toolbar, IconButton, Typography, Chip, useMediaQuery, useTheme } from '@mui/material';
+import { Box, AppBar, Toolbar, IconButton, Typography, Chip, useMediaQuery, useTheme, Alert, Button } from '@mui/material';
 import Menu from '@mui/icons-material/Menu';
 import Settings from '@mui/icons-material/Settings';
 import Sidebar from './Sidebar';
 import { useAuth } from '../contexts/AuthContext';
+import { useTenant } from '../contexts/TenantContext';
 
 export default function MainLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
+  const { isTrial, trialDaysLeft } = useTenant();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -17,6 +19,12 @@ export default function MainLayout() {
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {isTrial && (
+          <Alert severity="info" sx={{ borderRadius: 0, py: 0.5 }}
+            action={<Button size="small" color="inherit" onClick={() => navigate('/app/planos')}>Assinar</Button>}>
+            Teste grátis — {trialDaysLeft} {trialDaysLeft === 1 ? 'dia restante' : 'dias restantes'}
+          </Alert>
+        )}
         <AppBar position="sticky" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Toolbar>
             {isMobile && (

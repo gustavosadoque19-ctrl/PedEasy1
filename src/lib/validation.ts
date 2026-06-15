@@ -7,6 +7,7 @@ export const produtoSchema = z.object({
   preco_venda: z.string().min(1, 'Preço de venda é obrigatório').refine((v) => parseFloat(v) > 0, 'Preço deve ser maior que zero'),
   preco_custo: z.string().optional().default(''),
   unidade: z.string().optional().default('un'),
+  ncm: z.string().max(8, 'Máximo 8 caracteres').optional().default(''),
   estoque_atual: z.string().optional().default(''),
   estoque_minimo: z.string().optional().default(''),
   ativo: z.boolean(),
@@ -48,6 +49,7 @@ export const pedidoItemSchema = z.object({
   preco_unitario: z.number().min(0, 'Preço não pode ser negativo'),
   total: z.number().optional().default(0),
   observacao: z.string().optional().default(''),
+  ncm: z.string().optional().default(''),
 });
 
 export const pedidoSchema = z.object({

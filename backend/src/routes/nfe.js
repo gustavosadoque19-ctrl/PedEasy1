@@ -1,17 +1,17 @@
 import { Router } from 'express';
 import { authMiddleware } from '../auth.js';
-import { getAll, getById, create, update, remove, query } from '../store.js';
+import { getAll, getById, create, update, remove } from '../store.js';
 import * as focus from '../focus.js';
 
 const router = Router();
 
-router.get('/', authMiddleware, (req, res) => {
-  const list = getAll('nfe');
+router.get('/', authMiddleware, async (req, res) => {
+  const list = await getAll('nfe');
   res.json(list);
 });
 
-router.get('/:id', authMiddleware, (req, res) => {
-  const item = getById('nfe', Number(req.params.id));
+router.get('/:id', authMiddleware, async (req, res) => {
+  const item = await getById('nfe', Number(req.params.id));
   if (!item) return res.status(404).json({ error: 'NFe não encontrada' });
   res.json(item);
 });
@@ -21,31 +21,48 @@ router.post('/emitir', authMiddleware, async (req, res) => {
     const { pedido_id } = req.body;
     if (!pedido_id) return res.status(400).json({ error: 'pedido_id é obrigatório' });
 
-    const pedido = getById('pedidos', Number(pedido_id));
+    const pedido = await getById('pedidos', Number(pedido_id));
     if (!pedido) return res.status(404).json({ error: 'Pedido não encontrado' });
 
-    const cliente = pedido.cliente_id ? getById('clientes', pedido.cliente_id) : null;
+    const cliente = pedido.cliente_id ? await getById('clientes', pedido.cliente_id) : null;
 
-    const produtos = (pedido.itens || []).map((item) => ({
-      nome: item.produto_nome,
-      ncm: item.ncm || '21069090',
+    const produtos = (pedido.itens || []).map((item, i) => ({
+      numero_item: String(i + 1),
+      codigo_produto: String(item.produto_id),
+      descricao: item.produto_nome,
+      codigo_ncm: item.ncm || '21069090',
       cfop: '5102',
-      cst: '060',
-      quantidade: item.quantidade,
-      valor_unitario: item.preco_unitario,
-      valor_total: item.total,
-      unidade: 'UN',
+      unidade_comercial: 'UN',
+      unidade_tributavel: 'UN',
+      quantidade_comercial: item.quantidade,
+      quantidade_tributavel: item.quantidade,
+      valor_unitario_comercial: item.preco_unitario,
+      valor_unitario_tributavel: item.preco_unitario,
+      valor_bruto: item.total,
+      icms_origem: '0',
+      icms_situacao_tributaria: '102',
     }));
+
+    const formaPagamentoMap = {
+      dinheiro: '01',
+      credito: '03',
+      debito: '04',
+      pix: '10',
+      vale_refeicao: '11',
+      vale_alimentacao: '12',
+      vale_combustivel: '13',
+    };
 
     const dadosFocus = {
       pedido_id,
+      cnpj_emitente: process.env.FOCUS_CNPJ || '',
       cliente: cliente ? {
         nome: cliente.nome,
         cpf_cnpj: cliente.documento || undefined,
         telefone: cliente.telefone,
-        email: cliente.email,
         endereco: cliente.endereco ? {
-          logradouro: cliente.endereco,
+          logradouro: cliente.endereco.split(',')[0]?.trim() || cliente.endereco,
+          numero: '0',
           bairro: 'Centro',
           cidade: process.env.FOCUS_CIDADE || 'Sao Paulo',
           uf: process.env.FOCUS_UF || 'SP',
@@ -54,25 +71,30 @@ router.post('/emitir', authMiddleware, async (req, res) => {
       } : { nome: 'Consumidor' },
       itens: produtos,
       formas_pagamento: [{
-        meio_pagamento: pedido.forma_pagamento === 'dinheiro' ? '01' : pedido.forma_pagamento === 'credito' ? '03' : '04',
-        valor: pedido.valor_total,
+        forma_pagamento: formaPagamentoMap[pedido.forma_pagamento] || '99',
+        valor_pagamento: pedido.valor_total,
       }],
     };
 
     const result = await focus.emitirNFCe(dadosFocus);
 
-    const nfe = create('nfe', {
+    const statusMap = {
+      autorizado: 'autorizada',
+      erro_autorizacao: 'rejeitada',
+    };
+
+    const nfe = await create('nfe', {
       pedido_id: Number(pedido_id),
       cliente_id: pedido.cliente_id || null,
       numero_nf: result.numero,
-      chave_acesso: result.chave_acesso,
-      status: result.status === 'autorizada' ? 'autorizada' : result.status === 'rejeitada' ? 'rejeitada' : 'pendente',
+      chave_acesso: result.chave_nfe,
+      status: statusMap[result.status] || 'pendente',
       valor: pedido.valor_total,
-      xml: result.xml,
+      xml: result.caminho_xml_nota_fiscal,
       ref: result.ref,
-      protocolo: result.protocolo,
-      url_danfe: result.url_danfe,
-      url_qrcode: result.url_qrcode,
+      protocolo: result.status_sefaz,
+      url_danfe: result.caminho_danfe,
+      url_qrcode: result.qrcode_url,
     });
 
     res.json(nfe);
@@ -80,7 +102,7 @@ router.post('/emitir', authMiddleware, async (req, res) => {
     console.error('Erro ao emitir NFC-e:', err.response?.data || err.message);
     res.status(500).json({
       error: 'Erro ao emitir NFC-e',
-      detalhe: err.response?.data?.erros || err.message,
+      detalhe: err.response?.data?.erros || err.response?.data?.mensagem || err.message,
     });
   }
 });
@@ -90,32 +112,37 @@ router.post('/cancelar/:id', authMiddleware, async (req, res) => {
     const { motivo } = req.body;
     if (!motivo) return res.status(400).json({ error: 'Motivo do cancelamento é obrigatório' });
 
-    const nfe = getById('nfe', Number(req.params.id));
+    const nfe = await getById('nfe', Number(req.params.id));
     if (!nfe) return res.status(404).json({ error: 'NFe não encontrada' });
     if (nfe.status !== 'autorizada') return res.status(400).json({ error: 'NFe não está autorizada' });
 
     const result = await focus.cancelarNFCe(nfe.ref, motivo);
 
-    const updated = update('nfe', nfe.id, { status: 'cancelada' });
+    const updated = await update('nfe', nfe.id, { status: 'cancelada' });
     res.json(updated);
   } catch (err) {
     console.error('Erro ao cancelar NFC-e:', err.response?.data || err.message);
     res.status(500).json({
       error: 'Erro ao cancelar NFC-e',
-      detalhe: err.response?.data?.erros || err.message,
+      detalhe: err.response?.data?.erros || err.response?.data?.mensagem || err.message,
     });
   }
 });
 
 router.post('/consultar/:id', authMiddleware, async (req, res) => {
   try {
-    const nfe = getById('nfe', Number(req.params.id));
+    const nfe = await getById('nfe', Number(req.params.id));
     if (!nfe) return res.status(404).json({ error: 'NFe não encontrada' });
 
     const result = await focus.consultarNFCe(nfe.ref);
-    const updated = update('nfe', nfe.id, {
-      status: result.status === 'autorizada' ? 'autorizada' : result.status === 'cancelada' ? 'cancelada' : 'rejeitada',
-      protocolo: result.protocolo,
+    const statusMap = {
+      autorizado: 'autorizada',
+      cancelado: 'cancelada',
+      erro_autorizacao: 'rejeitada',
+    };
+    const updated = await update('nfe', nfe.id, {
+      status: statusMap[result.status] || 'pendente',
+      protocolo: result.status_sefaz,
     });
 
     res.json(updated);

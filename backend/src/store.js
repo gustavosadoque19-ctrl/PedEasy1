@@ -20,9 +20,17 @@ function formatRows(rows) {
   return rows.map(formatRow).filter(Boolean);
 }
 
-export async function getAll(collection) {
-  const table = tableName(collection);
-  const { data, error } = await supabase.from(table).select('*').order('id');
+function buildQuery(collection, tenantId) {
+  let query = supabase.from(tableName(collection)).select('*');
+  if (tenantId) {
+    query = query.filter('data->>tenant_id', 'eq', String(tenantId));
+  }
+  return query.order('id');
+}
+
+export async function getAll(collection, tenantId) {
+  const query = buildQuery(collection, tenantId);
+  const { data, error } = await query;
   if (error) {
     console.error(`getAll(${collection}):`, error);
     return [];
@@ -30,19 +38,25 @@ export async function getAll(collection) {
   return formatRows(data || []);
 }
 
-export async function getById(collection, id) {
-  const table = tableName(collection);
-  const { data, error } = await supabase.from(table).select('*').eq('id', id).maybeSingle();
+export async function getById(collection, id, tenantId) {
+  const { data, error } = await supabase.from(tableName(collection)).select('*').eq('id', id).maybeSingle();
   if (error) {
     console.error(`getById(${collection}, ${id}):`, error);
     return null;
   }
-  return formatRow(data);
+  const row = formatRow(data);
+  if (row && tenantId && row.tenant_id !== undefined && String(row.tenant_id) !== String(tenantId)) {
+    return null;
+  }
+  return row;
 }
 
-export async function create(collection, inputData) {
+export async function create(collection, inputData, tenantId) {
   const table = tableName(collection);
   const { id, ...data } = inputData;
+  if (tenantId && data.tenant_id === undefined) {
+    data.tenant_id = String(tenantId);
+  }
   const { data: row, error } = await supabase
     .from(table)
     .insert({ data })
@@ -81,8 +95,8 @@ export async function remove(collection, id) {
   return true;
 }
 
-export async function query(collection, fn) {
-  const rows = await getAll(collection);
+export async function query(collection, fn, tenantId) {
+  const rows = await getAll(collection, tenantId);
   return rows.filter(fn);
 }
 

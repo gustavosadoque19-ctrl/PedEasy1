@@ -15,6 +15,7 @@ import AccessTime from '@mui/icons-material/AccessTime';
 import PlayArrow from '@mui/icons-material/PlayArrow';
 import Cancel from '@mui/icons-material/Cancel';
 import Delete from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import PersonAdd from '@mui/icons-material/PersonAdd';
 import Search from '@mui/icons-material/Search';
 import Remove from '@mui/icons-material/Remove';
@@ -33,6 +34,7 @@ import { Pedido, PedidoItem, Produto, Cliente, Adicional, CategoriaAdicional } f
 import { useAuth } from '../../contexts/AuthContext';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import { statusLabels, statusColors } from '../../constants/pedido';
+import { useSnackbar } from '../../hooks/useSnackbar';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string;   icon: React.ReactElement }> = {
   livre: {
@@ -82,6 +84,7 @@ function groupAdicionaisByCategoria(adicionais: Adicional[]): Map<string, Adicio
 export default function Mesas() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const snackbar = useSnackbar();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -102,6 +105,7 @@ export default function Mesas() {
   const [openClientSearch, setOpenClientSearch] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
   const [itemToRemove, setItemToRemove] = useState<number | null>(null);
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<{ el: HTMLElement; numero: number } | null>(null);
 
   const [adicionais, setAdicionais] = useState<Adicional[]>([]);
@@ -138,41 +142,17 @@ export default function Mesas() {
     } catch (err) {
       if (!mountedRef.current) return;
       console.error(err);
+      snackbar.error('Erro ao carregar dados');
     } finally {
       if (mountedRef.current) setLoading(false);
     }
-  }, []);
+  }, [snackbar]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const [pedRes, prodRes, cliRes, adicRes, catAdicRes] = await Promise.all([
-          getPedidos(), getProdutos(), getClientes(), getAdicionais(), getCategoriasAdicionais(),
-        ]);
-        if (!cancelled) setPedidos(pedRes.data);
-        if (!cancelled) setProdutos(prodRes.data.filter((p: Produto) => p.ativo !== false));
-        if (!cancelled) setClientes(cliRes.data);
-        if (!cancelled) {
-          const catAtivas = (catAdicRes.data || []).filter((c: CategoriaAdicional) => c.ativo !== false);
-          const todosAdicionais = (adicRes.data || []).filter((a: Adicional) => a.ativo !== false);
-          const adicionaisComCat = todosAdicionais.map((a: Adicional) => {
-            const cat = catAtivas.find((c: CategoriaAdicional) => c.id === a.categoria_id);
-            return { ...a, categoria_nome: cat ? cat.nome : 'Outros' };
-          });
-          setAdicionais(adicionaisComCat);
-          if (adicionaisComCat.length > 0) {
-            localStorage.setItem('mock_adicionais', JSON.stringify(adicionaisComCat));
-          }
-        }
-      } catch (err) {
-        if (!cancelled) console.error(err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+    mountedRef.current = true;
+    loadAll();
+    return () => { mountedRef.current = false; };
+  }, [loadAll]);
 
   const mesasOcupadas = pedidos.filter(
     (p) => p.tipo === 'mesa' && p.mesa && p.status !== 'fechado' && p.status !== 'cancelado'
@@ -229,6 +209,7 @@ export default function Mesas() {
       await loadAll();
     } catch (err) {
       console.error(err);
+      snackbar.error('Erro ao cancelar pedido');
     }
   };
 
@@ -245,6 +226,7 @@ export default function Mesas() {
       navigate(`/pedidos/${res.data.id}`);
     } catch (err) {
       console.error(err);
+      snackbar.error('Erro ao abrir pedido');
     } finally {
       setCreating(false);
     }
@@ -254,13 +236,15 @@ export default function Mesas() {
     if (!selectedPedido?.id) return;
     setChangingStatus(true);
     try {
-      await updatePedido(selectedPedido.id, { status: status as Pedido['status'] });
+      const res = await updatePedido(selectedPedido.id, { status: status as Pedido['status'] });
+      setSelectedPedido(res.data);
       if (status === 'pronto' && selectedPedido.cliente_telefone) {
         notificarCliente(selectedPedido.id, selectedPedido.cliente_telefone);
       }
       await loadAll();
     } catch (err) {
       console.error(err);
+      snackbar.error('Erro ao alterar status do pedido');
     } finally {
       setChangingStatus(false);
     }
@@ -269,12 +253,14 @@ export default function Mesas() {
   const handleCancel = async () => {
     if (!deleteTarget?.id) return;
     try {
-      await updatePedido(deleteTarget.id, { status: 'cancelado' as Pedido['status'] });
+      const res = await updatePedido(deleteTarget.id, { status: 'cancelado' as Pedido['status'] });
       setDeleteTarget(null);
       setOpenDialog(false);
+      setSelectedPedido(res.data);
       await loadAll();
     } catch (err) {
       console.error(err);
+      snackbar.error('Erro ao cancelar pedido');
     }
   };
 
@@ -287,6 +273,23 @@ export default function Mesas() {
     setCustomizeQtd(qtd);
     setSelectedAdicionais([]);
     setItemObservacao('');
+    setCustomizeOpen(true);
+  };
+
+  const openEditItem = (item: PedidoItem, index: number) => {
+    const produto = produtos.find((p) => p.id === item.produto_id);
+    if (!produto) {
+      snackbar.error('Produto não encontrado para edição');
+      return;
+    }
+    const produtoAdicionais = (produto.adicionais_ids || [])
+      .map((id) => adicionais.find((a) => a.id === id))
+      .filter(Boolean) as Adicional[];
+    setCustomizeProduto({ ...produto, adicionais_disponiveis: produtoAdicionais } as Produto & { adicionais_disponiveis: Adicional[] });
+    setCustomizeQtd(item.quantidade);
+    setSelectedAdicionais(item.adicionais || []);
+    setItemObservacao(item.observacao || '');
+    setEditingItemIndex(index);
     setCustomizeOpen(true);
   };
 
@@ -306,7 +309,7 @@ export default function Mesas() {
     try {
       const adicionaisTotal = selectedAdicionais.reduce((s, a) => s + a.preco, 0);
       const precoUnitario = customizeProduto.preco_venda + adicionaisTotal;
-      const newItem: PedidoItem = {
+      const updatedItem: PedidoItem = {
         produto_id: customizeProduto.id!,
         produto_nome: customizeProduto.nome,
         quantidade: customizeQtd,
@@ -314,19 +317,28 @@ export default function Mesas() {
         total: precoUnitario * customizeQtd,
         observacao: itemObservacao,
         adicionais: selectedAdicionais,
+        ncm: customizeProduto.ncm,
       };
-      const updatedItens = [...(selectedPedido.itens || []), newItem];
-      await updatePedido(selectedPedido.id, {
+      const updatedItens = [...(selectedPedido.itens || [])];
+      if (editingItemIndex !== null) {
+        updatedItens[editingItemIndex] = updatedItem;
+      } else {
+        updatedItens.push(updatedItem);
+      }
+      const res = await updatePedido(selectedPedido.id, {
         itens: updatedItens,
         valor_total: calcTotal(updatedItens),
       });
+      setSelectedPedido(res.data);
       setCustomizeOpen(false);
       setCustomizeProduto(null);
+      setEditingItemIndex(null);
       setAddQtd({});
       setAddSearch('');
       await loadAll();
     } catch (err) {
       console.error(err);
+      snackbar.error('Erro ao adicionar item');
     } finally {
       setUpdatingItems(false);
     }
@@ -337,14 +349,16 @@ export default function Mesas() {
     setUpdatingItems(true);
     try {
       const updatedItens = selectedPedido.itens.filter((_, i) => i !== itemToRemove);
-      await updatePedido(selectedPedido.id, {
+      const res = await updatePedido(selectedPedido.id, {
         itens: updatedItens,
         valor_total: calcTotal(updatedItens),
       });
+      setSelectedPedido(res.data);
       setItemToRemove(null);
       await loadAll();
     } catch (err) {
       console.error(err);
+      snackbar.error('Erro ao remover item');
     } finally {
       setUpdatingItems(false);
     }
@@ -354,16 +368,18 @@ export default function Mesas() {
     if (!selectedPedido?.id) return;
     setUpdatingItems(true);
     try {
-      await updatePedido(selectedPedido.id, {
+      const res = await updatePedido(selectedPedido.id, {
         cliente_id: cliente.id,
         cliente_nome: cliente.nome,
         cliente_telefone: cliente.telefone,
       });
+      setSelectedPedido(res.data);
       setOpenClientSearch(false);
       setClientSearch('');
       await loadAll();
     } catch (err) {
       console.error(err);
+      snackbar.error('Erro ao vincular cliente');
     } finally {
       setUpdatingItems(false);
     }
@@ -475,7 +491,7 @@ export default function Mesas() {
                         <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main', mt: 0.5 }}>
                           R$ {(pedido.valor_total ?? 0).toFixed(2)}
                         </Typography>
-                        {nextAct && (
+                        {nextAct && pedido.status !== 'aberto' && (
                           <Button fullWidth size="small" variant="contained" color={nextAct.color}
                             startIcon={nextAct.icon}
                             onClick={(e) => { e.stopPropagation(); handleMesaClick(numero); }}
@@ -608,9 +624,14 @@ export default function Mesas() {
                               R$ {((item.total ?? 0) || item.quantidade * (item.preco_unitario ?? 0)).toFixed(2)}
                             </Typography>
                             {selectedPedido.status !== 'fechado' && selectedPedido.status !== 'cancelado' && (
-                              <IconButton size="small" aria-label="Remover item" color="error" onClick={() => setItemToRemove(i)} sx={{ p: 0.3 }}>
-                                <Delete fontSize="small" />
-                              </IconButton>
+                              <>
+                                <IconButton size="small" aria-label="Editar adicionais" onClick={() => openEditItem(item, i)} sx={{ p: 0.3 }}>
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton size="small" aria-label="Remover item" color="error" onClick={() => setItemToRemove(i)} sx={{ p: 0.3 }}>
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </>
                             )}
                           </Box>
                         </Box>
@@ -742,12 +763,12 @@ export default function Mesas() {
       </Dialog>
 
       {/* Diálogo de Personalização (Adicionais + Observação) */}
-      <Dialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog open={customizeOpen} onClose={() => { setCustomizeOpen(false); setEditingItemIndex(null); }} maxWidth="xs" fullWidth>
         {customizeProduto && (
           <>
             <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Fastfood color="primary" />
-              {customizeProduto.nome}
+              {editingItemIndex !== null ? `Editar: ${customizeProduto.nome}` : customizeProduto.nome}
             </DialogTitle>
             <DialogContent>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -846,7 +867,7 @@ export default function Mesas() {
             <DialogActions>
               <Button onClick={() => setCustomizeOpen(false)} color="inherit">Cancelar</Button>
               <Button variant="contained" onClick={confirmAddItem} disabled={updatingItems}>
-                {updatingItems ? <CircularProgress size={18} color="inherit" /> : 'Adicionar ao Pedido'}
+                {updatingItems ? <CircularProgress size={18} color="inherit" /> : editingItemIndex !== null ? 'Atualizar Item' : 'Adicionar ao Pedido'}
               </Button>
             </DialogActions>
           </>

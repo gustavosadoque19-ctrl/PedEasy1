@@ -24,14 +24,27 @@ export async function emitirNFCe(dados) {
   const ref = `pedido-${dados.pedido_id}-${Date.now()}`;
   const payload = {
     referencia: ref,
-    natureza_operacao: 'Venda ao consumidor',
+    natureza_operacao: 'VENDA AO CONSUMIDOR',
     data_emissao: new Date().toISOString(),
     tipo_documento: '1',
     finalidade_emissao: '1',
     destino_operacao: '1',
     consumidor_final: '1',
     presenca_comprador: '1',
-    ...dados,
+    modalidade_frete: '9',
+    local_destino: '1',
+    cnpj_emitente: dados.cnpj_emitente,
+    nome_destinatario: dados.cliente?.nome || 'Consumidor',
+    cpf_destinatario: dados.cliente?.cpf_cnpj || undefined,
+    logradouro_destinatario: dados.cliente?.endereco?.logradouro,
+    numero_destinatario: dados.cliente?.endereco?.numero || '0',
+    bairro_destinatario: dados.cliente?.endereco?.bairro || 'Centro',
+    municipio_destinatario: dados.cliente?.endereco?.cidade || process.env.FOCUS_CIDADE || 'Sao Paulo',
+    uf_destinatario: dados.cliente?.endereco?.uf || process.env.FOCUS_UF || 'SP',
+    cep_destinatario: dados.cliente?.endereco?.cep || '00000000',
+    telefone_destinatario: dados.cliente?.telefone,
+    items: dados.itens,
+    formas_pagamento: dados.formas_pagamento,
   };
   const response = await api().post('/v2/nfce?ref=' + ref, payload);
   return { ref, ...response.data };

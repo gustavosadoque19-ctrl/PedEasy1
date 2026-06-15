@@ -41,6 +41,7 @@ export interface Produto {
   imagem?: string;
   adicionais_ids?: number[];
   max_adicionais?: number;
+  ncm?: string;
   createdAt?: string;
 }
 
@@ -88,6 +89,7 @@ export interface PedidoItem {
   total: number;
   observacao: string;
   adicionais?: Adicional[];
+  ncm?: string;
 }
 
 export interface EstoqueMovimento {

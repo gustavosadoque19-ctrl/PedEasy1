@@ -25,6 +25,7 @@ function toProduto(form: ProdutoFormData): Omit<Produto, 'id' | 'createdAt'> {
     preco_venda: parseFloat(form.preco_venda) || 0,
     preco_custo: parseFloat(form.preco_custo) || 0,
     unidade: form.unidade,
+    ncm: form.ncm || undefined,
     estoque_atual: parseFloat(form.estoque_atual) || 0,
     estoque_minimo: parseFloat(form.estoque_minimo) || 0,
     ativo: form.ativo,
@@ -48,7 +49,7 @@ export default function ProdutosForm() {
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<ProdutoFormData>({
     resolver: zodResolver(produtoSchema) as any,
-    defaultValues: { nome: '', descricao: '', categoria: '', preco_venda: '', preco_custo: '', unidade: 'un', estoque_atual: '', estoque_minimo: '', ativo: true, adicionais_ids: [], max_adicionais: 0 },
+    defaultValues: { nome: '', descricao: '', categoria: '', preco_venda: '', preco_custo: '', unidade: 'un', ncm: '', estoque_atual: '', estoque_minimo: '', ativo: true, adicionais_ids: [], max_adicionais: 0 },
   });
 
   useEffect(() => {
@@ -66,7 +67,7 @@ export default function ProdutosForm() {
       reset({
         nome: p.nome, descricao: p.descricao ?? '', categoria: p.categoria,
         preco_venda: p.preco_venda.toString(), preco_custo: (p.preco_custo ?? 0).toString(),
-        unidade: p.unidade ?? 'un', estoque_atual: (p.estoque_atual ?? 0).toString(),
+        unidade: p.unidade ?? 'un', ncm: p.ncm ?? '', estoque_atual: (p.estoque_atual ?? 0).toString(),
         estoque_minimo: (p.estoque_minimo ?? 0).toString(), ativo: p.ativo,
         adicionais_ids: p.adicionais_ids || [],
         max_adicionais: p.max_adicionais || 0,
@@ -140,6 +141,11 @@ export default function ProdutosForm() {
                   <TextField {...field} fullWidth label="Unidade" size="small" select>
                     {['un', 'kg', 'g', 'L', 'ml', 'cx'].map((u) => <MenuItem key={u} value={u}>{u}</MenuItem>)}
                   </TextField>
+                )} />
+              </Grid>
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Controller name="ncm" control={control} render={({ field }) => (
+                  <TextField {...field} fullWidth label="NCM" size="small" placeholder="21069090" slotProps={{ htmlInput: { maxLength: 8 } }} />
                 )} />
               </Grid>
               <Grid size={{ xs: 12 }}>

@@ -4,21 +4,17 @@ import Fastfood from '@mui/icons-material/Fastfood';
 import RestaurantMenu from '@mui/icons-material/RestaurantMenu';
 import LocalOffer from '@mui/icons-material/LocalOffer';
 import People from '@mui/icons-material/People';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import api from '../../api/axios';
 
 function MobileLogin() {
-  const [usuario, setUsuario] = useState('');
+  const [emailOrUser, setEmailOrUser] = useState('');
   const [senha, setSenha] = useState('');
   const [serverUrl, setServerUrl] = useState(localStorage.getItem('server_url') || '/api');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [regNome, setRegNome] = useState('');
-  const [regUsuario, setRegUsuario] = useState('');
-  const [regSenha, setRegSenha] = useState('');
-  const [regConfirmar, setRegConfirmar] = useState('');
-  const { login, loginDev } = useAuth();
+  const { login, loginEmail, loginDev } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,31 +22,15 @@ function MobileLogin() {
     setLoading(true);
     localStorage.setItem('server_url', serverUrl);
     try {
-      await login(usuario, senha);
+      if (emailOrUser.includes('@')) {
+        await loginEmail(emailOrUser, senha);
+      } else {
+        await login(emailOrUser, senha);
+      }
+      navigate('/app');
     } catch (err: unknown) {
       const apiErr = err as { response?: { data?: { error?: string } } };
       setError(apiErr.response?.data?.error || 'Erro ao conectar. Verifique servidor e credenciais.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    if (regSenha !== regConfirmar) {
-      setError('Senhas não conferem');
-      return;
-    }
-    setLoading(true);
-    localStorage.setItem('server_url', serverUrl);
-    try {
-      await api.post('/auth/register', { nome: regNome, usuario: regUsuario, senha: regSenha });
-      setRegNome(''); setRegUsuario(''); setRegSenha(''); setRegConfirmar('');
-      setIsRegistering(false);
-    } catch (err: unknown) {
-      const apiErr = err as { response?: { data?: { error?: string } } };
-      setError(apiErr.response?.data?.error || 'Erro ao cadastrar');
     } finally {
       setLoading(false);
     }
@@ -64,40 +44,24 @@ function MobileLogin() {
             <Fastfood sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
             <Typography variant="h5">PedEasy</Typography>
             <Typography variant="body2" color="text.secondary">
-              {isRegistering ? 'Crie sua conta' : 'Faça login para continuar'}
+              Faça login para continuar
             </Typography>
           </Box>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          {isRegistering ? (
-            <Box component="form" onSubmit={handleRegister}>
-              <TextField fullWidth label="Servidor" size="small" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} sx={{ mb: 2 }} />
-              <TextField fullWidth label="Nome" size="small" value={regNome} onChange={(e) => setRegNome(e.target.value)} sx={{ mb: 2 }} required />
-              <TextField fullWidth label="Usuário" size="small" value={regUsuario} onChange={(e) => setRegUsuario(e.target.value)} sx={{ mb: 2 }} required />
-              <TextField fullWidth label="Senha" type="password" size="small" value={regSenha} onChange={(e) => setRegSenha(e.target.value)} sx={{ mb: 2 }} required />
-              <TextField fullWidth label="Confirmar Senha" type="password" size="small" value={regConfirmar} onChange={(e) => setRegConfirmar(e.target.value)} sx={{ mb: 3 }} required />
-              <Button fullWidth type="submit" variant="contained" size="large" disabled={loading} sx={{ mb: 1 }}>
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Cadastrar'}
-              </Button>
-              <Button fullWidth variant="text" size="small" onClick={() => setIsRegistering(false)}>
-                Voltar ao login
-              </Button>
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField fullWidth label="Servidor" size="small" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} sx={{ mb: 2 }} />
+            <TextField fullWidth label="Email ou Usuário" size="small" value={emailOrUser} onChange={(e) => setEmailOrUser(e.target.value)} sx={{ mb: 2 }} required />
+            <TextField fullWidth label="Senha" type="password" size="small" value={senha} onChange={(e) => setSenha(e.target.value)} sx={{ mb: 3 }} required />
+            {import.meta.env.DEV && <Button fullWidth variant="outlined" size="large" onClick={loginDev} sx={{ mb: 1 }}>Acesso Admin (Dev)</Button>}
+            <Button fullWidth type="submit" variant="contained" size="large" disabled={loading}>
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
+            </Button>
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Link component={RouterLink} variant="body2" to="/signup">
+                Não tem conta? Cadastre-se
+              </Link>
             </Box>
-          ) : (
-            <Box component="form" onSubmit={handleSubmit}>
-              <TextField fullWidth label="Servidor" size="small" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} sx={{ mb: 2 }} />
-              <TextField fullWidth label="Usuário" size="small" value={usuario} onChange={(e) => setUsuario(e.target.value)} sx={{ mb: 2 }} required />
-              <TextField fullWidth label="Senha" type="password" size="small" value={senha} onChange={(e) => setSenha(e.target.value)} sx={{ mb: 3 }} required />
-              {import.meta.env.DEV && <Button fullWidth variant="outlined" size="large" onClick={loginDev} sx={{ mb: 1 }}>Acesso Admin (Dev)</Button>}
-              <Button fullWidth type="submit" variant="contained" size="large" disabled={loading}>
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
-              </Button>
-              <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Link component="button" variant="body2" onClick={() => setIsRegistering(true)}>
-                  Não tem conta? Cadastre-se
-                </Link>
-              </Box>
-            </Box>
-          )}
+          </Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 2 }}>
             Configure o IP do servidor para conectar dos celulares
           </Typography>
@@ -108,19 +72,15 @@ function MobileLogin() {
 }
 
 function DesktopLogin() {
-  const [usuario, setUsuario] = useState('');
+  const [emailOrUser, setEmailOrUser] = useState('');
   const [senha, setSenha] = useState('');
   const storedUrl = localStorage.getItem('server_url');
   const defaultUrl = (storedUrl && !(storedUrl.includes('localhost') && typeof window !== 'undefined' && !window.location.hostname.includes('localhost'))) ? storedUrl : '/api';
   const [serverUrl, setServerUrl] = useState(defaultUrl);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [regNome, setRegNome] = useState('');
-  const [regUsuario, setRegUsuario] = useState('');
-  const [regSenha, setRegSenha] = useState('');
-  const [regConfirmar, setRegConfirmar] = useState('');
-  const { login, loginDev } = useAuth();
+  const { login, loginEmail, loginDev } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,31 +88,15 @@ function DesktopLogin() {
     setLoading(true);
     localStorage.setItem('server_url', serverUrl);
     try {
-      await login(usuario, senha);
+      if (emailOrUser.includes('@')) {
+        await loginEmail(emailOrUser, senha);
+      } else {
+        await login(emailOrUser, senha);
+      }
+      navigate('/app');
     } catch (err: unknown) {
       const apiErr = err as { response?: { data?: { error?: string } } };
       setError(apiErr.response?.data?.error || 'Erro ao conectar. Verifique servidor e credenciais.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    if (regSenha !== regConfirmar) {
-      setError('Senhas não conferem');
-      return;
-    }
-    setLoading(true);
-    localStorage.setItem('server_url', serverUrl);
-    try {
-      await api.post('/auth/register', { nome: regNome, usuario: regUsuario, senha: regSenha });
-      setRegNome(''); setRegUsuario(''); setRegSenha(''); setRegConfirmar('');
-      setIsRegistering(false);
-    } catch (err: unknown) {
-      const apiErr = err as { response?: { data?: { error?: string } } };
-      setError(apiErr.response?.data?.error || 'Erro ao cadastrar');
     } finally {
       setLoading(false);
     }
@@ -249,55 +193,34 @@ function DesktopLogin() {
         <Paper elevation={0} sx={{ maxWidth: 420, width: '100%', p: 5, borderRadius: 3 }}>
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-              {isRegistering ? 'Criar Conta' : 'Bem-vindo'}
+              Bem-vindo
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {isRegistering ? 'Preencha os dados para se cadastrar' : 'Faça login com suas credenciais'}
+              Faça login com seu email ou usuário
             </Typography>
           </Box>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          {isRegistering ? (
-            <Box component="form" onSubmit={handleRegister}>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Servidor</Typography>
-              <TextField fullWidth size="small" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} sx={{ mb: 2.5 }} placeholder="/api" />
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Nome</Typography>
-              <TextField fullWidth size="small" value={regNome} onChange={(e) => setRegNome(e.target.value)} sx={{ mb: 2.5 }} required placeholder="Seu nome completo" />
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Usuário</Typography>
-              <TextField fullWidth size="small" value={regUsuario} onChange={(e) => setRegUsuario(e.target.value)} sx={{ mb: 2.5 }} required placeholder="Escolha um usuário" />
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Senha</Typography>
-              <TextField fullWidth size="small" type="password" value={regSenha} onChange={(e) => setRegSenha(e.target.value)} sx={{ mb: 2.5 }} required placeholder="Sua senha" />
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Confirmar Senha</Typography>
-              <TextField fullWidth size="small" type="password" value={regConfirmar} onChange={(e) => setRegConfirmar(e.target.value)} sx={{ mb: 3.5 }} required placeholder="Confirme a senha" />
-              <Button fullWidth type="submit" variant="contained" size="large" disabled={loading} sx={{ py: 1.5, mb: 1 }}>
-                {loading ? <CircularProgress size={22} color="inherit" /> : 'Cadastrar'}
+          <Box component="form" onSubmit={handleSubmit}>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Servidor</Typography>
+            <TextField fullWidth size="small" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} sx={{ mb: 2.5 }} placeholder="/api" />
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Email ou Usuário</Typography>
+            <TextField fullWidth size="small" value={emailOrUser} onChange={(e) => setEmailOrUser(e.target.value)} sx={{ mb: 2.5 }} required placeholder="Digite seu email ou usuário" />
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Senha</Typography>
+            <TextField fullWidth size="small" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} sx={{ mb: 3.5 }} required placeholder="Digite sua senha" />
+            {import.meta.env.DEV && (
+              <Button fullWidth variant="outlined" size="medium" onClick={loginDev} sx={{ mb: 1.5 }}>
+                Acesso Admin (Dev)
               </Button>
-              <Button fullWidth variant="text" size="small" onClick={() => setIsRegistering(false)}>
-                Voltar ao login
-              </Button>
+            )}
+            <Button fullWidth type="submit" variant="contained" size="large" disabled={loading} sx={{ py: 1.5 }}>
+              {loading ? <CircularProgress size={22} color="inherit" /> : 'Entrar'}
+            </Button>
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Link component={RouterLink} variant="body2" to="/signup">
+                Não tem conta? Cadastre-se
+              </Link>
             </Box>
-          ) : (
-            <Box component="form" onSubmit={handleSubmit}>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Servidor</Typography>
-              <TextField fullWidth size="small" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} sx={{ mb: 2.5 }} placeholder="/api" />
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Usuário</Typography>
-              <TextField fullWidth size="small" value={usuario} onChange={(e) => setUsuario(e.target.value)} sx={{ mb: 2.5 }} required placeholder="Digite seu usuário" />
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Senha</Typography>
-              <TextField fullWidth size="small" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} sx={{ mb: 3.5 }} required placeholder="Digite sua senha" />
-              {import.meta.env.DEV && (
-                <Button fullWidth variant="outlined" size="medium" onClick={loginDev} sx={{ mb: 1.5 }}>
-                  Acesso Admin (Dev)
-                </Button>
-              )}
-              <Button fullWidth type="submit" variant="contained" size="large" disabled={loading} sx={{ py: 1.5 }}>
-                {loading ? <CircularProgress size={22} color="inherit" /> : 'Entrar'}
-              </Button>
-              <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Link component="button" variant="body2" onClick={() => setIsRegistering(true)}>
-                  Não tem conta? Cadastre-se
-                </Link>
-              </Box>
-            </Box>
-          )}
+          </Box>
         </Paper>
       </Box>
     </Box>

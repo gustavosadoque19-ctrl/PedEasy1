@@ -41,7 +41,7 @@ export default function PedidosForm() {
   const { fields, append, remove } = useFieldArray({ control, name: 'itens' });
 
   const addItem = useCallback(() => {
-    append({ produto_id: 0, produto_nome: '', quantidade: 1, preco_unitario: 0, total: 0, observacao: '' });
+    append({ produto_id: 0, produto_nome: '', quantidade: 1, preco_unitario: 0, total: 0, observacao: '', ncm: '' });
   }, [append]);
 
   const recalcTotal = useCallback((itens: PedidoFormData['itens']) => {
@@ -56,6 +56,7 @@ export default function PedidosForm() {
       setValue(`itens.${index}.produto_nome`, produto.nome);
       setValue(`itens.${index}.preco_unitario`, produto.preco_venda);
       setValue(`itens.${index}.total`, produto.preco_venda * (watch(`itens.${index}.quantidade`) || 1));
+      setValue(`itens.${index}.ncm`, produto.ncm || '');
     }
     recalcTotal(watch('itens'));
   }, [produtos, setValue, watch, recalcTotal]);

@@ -11,6 +11,7 @@ import PictureAsPdf from '@mui/icons-material/PictureAsPdf';
 import QrCode from '@mui/icons-material/QrCode';
 import { getNFeList, emitirNFe, cancelarNFe, consultarNFe } from '../../api/nfe';
 import { NFe } from '../../types';
+import { useSnackbar } from '../../hooks/useSnackbar';
 
 const statusColors: Record<string, 'warning' | 'success' | 'error' | 'default'> = {
   pendente: 'warning', autorizada: 'success', cancelada: 'error', rejeitada: 'default',
@@ -26,6 +27,7 @@ export default function NFeList() {
   const [openEmitir, setOpenEmitir] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<NFe | null>(null);
   const [motivoCancel, setMotivoCancel] = useState('');
+  const snackbar = useSnackbar();
 
   const mountedRef = useRef(true);
 
@@ -35,27 +37,29 @@ export default function NFeList() {
       try {
         const res = await getNFeList();
         if (!cancelled) setNfeList(res.data);
-      } catch (err) {
-        if (!cancelled) console.error(err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  const load = useCallback(async () => {
-    try {
-      const res = await getNFeList();
-      if (!mountedRef.current) return;
-      setNfeList(res.data);
     } catch (err) {
-      if (!mountedRef.current) return;
-      console.error(err);
+      if (!cancelled) console.error(err);
+      if (!cancelled) snackbar.error('Erro ao carregar NFC-e');
     } finally {
-      if (mountedRef.current) setLoading(false);
+      if (!cancelled) setLoading(false);
     }
-  }, []);
+  })();
+  return () => { cancelled = true; };
+}, [snackbar]);
+
+const load = useCallback(async () => {
+  try {
+    const res = await getNFeList();
+    if (!mountedRef.current) return;
+    setNfeList(res.data);
+  } catch (err) {
+    if (!mountedRef.current) return;
+    console.error(err);
+    snackbar.error('Erro ao carregar NFC-e');
+  } finally {
+    if (mountedRef.current) setLoading(false);
+  }
+}, [snackbar]);
 
   const handleEmitir = async () => {
     if (!pedidoId) return;
@@ -63,12 +67,15 @@ export default function NFeList() {
     setError('');
     try {
       await emitirNFe(Number(pedidoId));
+      snackbar.success('NFC-e emitida com sucesso!');
       setOpenEmitir(false);
       setPedidoId('');
       load();
     } catch (err: unknown) {
       const apiErr = err as { response?: { data?: { detalhe?: string; error?: string } } };
-      setError(apiErr.response?.data?.detalhe || apiErr.response?.data?.error || 'Erro ao emitir');
+      const msg = apiErr.response?.data?.detalhe || apiErr.response?.data?.error || 'Erro ao emitir';
+      setError(msg);
+      snackbar.error(msg);
     } finally {
       setEmitindo(false);
     }
@@ -79,10 +86,13 @@ export default function NFeList() {
     setConsultando(nfe.id);
     try {
       await consultarNFe(nfe.id);
+      snackbar.success('Status atualizado!');
       load();
     } catch (err: unknown) {
       const apiErr = err as { response?: { data?: { error?: string } } };
-      setError(apiErr.response?.data?.error || 'Erro ao consultar');
+      const msg = apiErr.response?.data?.error || 'Erro ao consultar';
+      setError(msg);
+      snackbar.error(msg);
     } finally {
       setConsultando(null);
     }
@@ -92,12 +102,15 @@ export default function NFeList() {
     if (!cancelTarget?.id || !motivoCancel) return;
     try {
       await cancelarNFe(cancelTarget.id, motivoCancel);
+      snackbar.success('NFC-e cancelada com sucesso!');
       setCancelTarget(null);
       setMotivoCancel('');
       load();
     } catch (err: unknown) {
       const apiErr = err as { response?: { data?: { detalhe?: string; error?: string } } };
-      setError(apiErr.response?.data?.detalhe || apiErr.response?.data?.error || 'Erro ao cancelar');
+      const msg = apiErr.response?.data?.detalhe || apiErr.response?.data?.error || 'Erro ao cancelar';
+      setError(msg);
+      snackbar.error(msg);
     }
   };
 
@@ -178,7 +191,7 @@ export default function NFeList() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {nfeList.length === 0 && <TableRow><TableCell colSpan={4} align="center">Nenhuma NFC-e encontrada</TableCell></TableRow>}
+                  {nfeList.length === 0 && <TableRow><TableCell colSpan={7} align="center">Nenhuma NFC-e encontrada</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TableContainer>

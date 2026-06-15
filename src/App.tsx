@@ -3,11 +3,15 @@ import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline, CircularProgress, Box } from '@mui/material';
 import { lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { TenantProvider } from './contexts/TenantContext';
 import theme from './theme';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
+const Landing = lazy(() => import('./pages/Landing/Landing'));
 const MainLayout = lazy(() => import('./layouts/MainLayout'));
 const Login = lazy(() => import('./pages/Login/Login'));
+const Signup = lazy(() => import('./pages/Signup/Signup'));
+const Planos = lazy(() => import('./pages/Planos/Planos'));
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
 const ClientesList = lazy(() => import('./pages/Clientes/ClientesList'));
 const ClientesForm = lazy(() => import('./pages/Clientes/ClientesForm'));
@@ -33,6 +37,10 @@ const Pagamentos = lazy(() => import('./pages/Pagamentos/Pagamentos'));
 const Integracoes = lazy(() => import('./pages/Integracoes/Integracoes'));
 const AtendimentoVirtual = lazy(() => import('./pages/AtendimentoVirtual/AtendimentoVirtual'));
 const CardapioPage = lazy(() => import('./pages/Cardapio/Cardapio'));
+const Assinatura = lazy(() => import('./pages/Saas/Assinatura'));
+const Onboarding = lazy(() => import('./pages/Saas/Onboarding'));
+const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
+const Admin = lazy(() => import('./pages/Admin/Admin'));
 
 function PageFallback() {
   return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
@@ -50,10 +58,16 @@ function AppRoutes() {
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/app" /> : <Login />} />
+        <Route path="/signup" element={isAuthenticated ? <Navigate to="/app" /> : <Signup />} />
         <Route path="/cardapio" element={<ErrorBoundary><CardapioPage /></ErrorBoundary>} />
-        <Route path="/" element={<PrivateRoute><MainLayout /></PrivateRoute>}>
+        <Route path="/cardapio/:slug" element={<ErrorBoundary><CardapioPage /></ErrorBoundary>} />
+        <Route path="/app" element={<PrivateRoute><TenantProvider><MainLayout /></TenantProvider></PrivateRoute>}>
           <Route index element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+          <Route path="planos" element={<ErrorBoundary><Planos /></ErrorBoundary>} />
+          <Route path="assinatura" element={<ErrorBoundary><Assinatura /></ErrorBoundary>} />
+          <Route path="onboarding" element={<ErrorBoundary><Onboarding /></ErrorBoundary>} />
           <Route path="clientes" element={<ErrorBoundary><ClientesList /></ErrorBoundary>} />
           <Route path="clientes/novo" element={<ErrorBoundary><ClientesForm /></ErrorBoundary>} />
           <Route path="clientes/:id" element={<ErrorBoundary><ClientesForm /></ErrorBoundary>} />
@@ -81,6 +95,9 @@ function AppRoutes() {
           <Route path="pagamentos" element={<ErrorBoundary><Pagamentos /></ErrorBoundary>} />
           <Route path="integracoes" element={<ErrorBoundary><Integracoes /></ErrorBoundary>} />
           <Route path="atendimento" element={<ErrorBoundary><AtendimentoVirtual /></ErrorBoundary>} />
+        </Route>
+        <Route path="/admin" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
+          <Route index element={<ErrorBoundary><Admin /></ErrorBoundary>} />
         </Route>
       </Routes>
     </Suspense>

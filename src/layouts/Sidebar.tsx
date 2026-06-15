@@ -22,6 +22,7 @@ import Payments from '@mui/icons-material/Payments';
 import Link from '@mui/icons-material/Link';
 import Chat from '@mui/icons-material/Chat';
 import OpenInNew from '@mui/icons-material/OpenInNew';
+import Shield from '@mui/icons-material/Shield';
 import { useAuth } from '../contexts/AuthContext';
 
 const DRAWER_WIDTH = 260;
@@ -88,7 +89,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
 
   const content = (
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -124,6 +125,15 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         ))}
       </Box>
       <Divider sx={{ borderColor: '#334155' }} />
+      <List sx={{ px: 1, py: 1 }}>
+        {(user as any)?.permissao === 'superadmin' && (
+          <ListItemButton onClick={() => navigate('/admin')}
+            sx={{ borderRadius: 2, mb: 0.5, color: '#38bdf8', '&:hover': { bgcolor: '#334155' } }}>
+            <ListItemIcon sx={{ minWidth: 36, color: '#38bdf8' }}><Shield /></ListItemIcon>
+            <ListItemText primary="Admin" slotProps={{ primary: { sx: { fontSize: '0.88rem', fontWeight: 600 } } }} />
+          </ListItemButton>
+        )}
+      </List>
       <List sx={{ px: 1, py: 1 }}>
         <ListItemButton component="a" href="/cardapio" target="_blank"
           sx={{ borderRadius: 2, color: '#cbd5e1', '&:hover': { bgcolor: '#334155' } }}>

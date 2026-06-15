@@ -11,11 +11,19 @@ import Save from '@mui/icons-material/Save';
 import { getFuncionario, createFuncionario, updateFuncionario } from '../../api/funcionarios';
 import { funcionarioSchema, FuncionarioFormData } from '../../lib/validation';
 
+function extrairMensagemErro(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  const obj = err as { response?: { data?: Record<string, unknown>; status?: number } };
+  const raw = obj.response?.data?.error ?? obj.response?.data?.message;
+  if (typeof raw === 'string') return raw;
+  return `Erro ${obj.response?.status ?? 'de conexão'} ao salvar`;
+}
+
 export default function FuncionariosForm() {
   const { id } = useParams();
   const isEditing = !!id;
   const navigate = useNavigate();
-  const [loading] = useState(false);
+  const [loadingDados, setLoadingDados] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState('');
 
@@ -26,33 +34,42 @@ export default function FuncionariosForm() {
 
   useEffect(() => {
     if (!isEditing) return;
-    let cancelled = false;
-    getFuncionario(Number(id)).then((res) => { if (!cancelled) reset({ ...res.data, senha: '' }); }).catch(() => { if (!cancelled) setApiError('Erro ao carregar'); });
-    return () => { cancelled = true; };
+    let canc = false;
+    (async () => {
+      try {
+        const res = await getFuncionario(Number(id));
+        if (!canc) reset({ ...res.data, senha: '' });
+      } catch {
+        if (!canc) setApiError('Erro ao carregar dados do funcionário');
+      } finally {
+        if (!canc) setLoadingDados(false);
+      }
+    })();
+    return () => { canc = true; };
   }, [id, isEditing, reset]);
 
   const onSubmit = async (data: FuncionarioFormData) => {
     setSaving(true);
     setApiError('');
     try {
-      const clean = { ...data } as Omit<FuncionarioFormData, 'senha'> & { senha?: string };
-      if (isEditing && !clean.senha) delete clean.senha;
+      const { senha, ...campos } = data;
       if (isEditing) {
-        await updateFuncionario(Number(id), clean);
+        const payload = senha ? data : campos;
+        await updateFuncionario(Number(id), payload);
       } else {
-        await createFuncionario(clean);
+        await createFuncionario(data);
       }
       navigate('/funcionarios');
     } catch (err: unknown) {
-      const apiErr = err as { response?: { data?: { error?: string; message?: string }; status?: number } };
-      const msg = apiErr.response?.data?.error || apiErr.response?.data?.message || `Erro ${apiErr.response?.status || 'de conexão'} ao salvar`;
-      setApiError(msg);
+      setApiError(extrairMensagemErro(err));
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
+  if (loadingDados) {
+    return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
+  }
 
   return (
     <Box>
@@ -60,25 +77,30 @@ export default function FuncionariosForm() {
         <Button startIcon={<ArrowBack />} onClick={() => navigate('/funcionarios')}>Voltar</Button>
         <Typography variant="h4">{isEditing ? 'Editar Funcionário' : 'Novo Funcionário'}</Typography>
       </Box>
+
       {apiError && <Alert severity="error" sx={{ mb: 2 }}>{apiError}</Alert>}
+
       <Card>
         <CardContent>
           <Box component="form" onSubmit={handleSubmit(onSubmit as any)}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Controller name="nome" control={control} render={({ field }) => (
-                  <TextField {...field} fullWidth label="Nome" size="small" required error={!!errors.nome} helperText={errors.nome?.message} autoFocus />
+                  <TextField {...field} fullWidth label="Nome" size="small" required
+                    error={!!errors.nome} helperText={errors.nome?.message} autoFocus />
                 )} />
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
                 <Controller name="usuario" control={control} render={({ field }) => (
-                  <TextField {...field} fullWidth label="Usuário" size="small" required error={!!errors.usuario} helperText={errors.usuario?.message} />
+                  <TextField {...field} fullWidth label="Usuário" size="small" required
+                    error={!!errors.usuario} helperText={errors.usuario?.message} />
                 )} />
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
                 <Controller name="senha" control={control} render={({ field }) => (
                   <TextField {...field} fullWidth label="Senha" size="small" type="password"
-                    required={!isEditing} placeholder={isEditing ? 'Deixe em branco para manter' : ''} />
+                    required={!isEditing}
+                    placeholder={isEditing ? 'Deixe em branco para manter' : ''} />
                 )} />
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
@@ -89,7 +111,9 @@ export default function FuncionariosForm() {
               <Grid size={{ xs: 12, md: 3 }}>
                 <Controller name="permissao" control={control} render={({ field }) => (
                   <TextField {...field} fullWidth label="Permissão" size="small" select>
-                    {['admin', 'gerente', 'operador', 'cozinha'].map((p) => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+                    {['admin', 'gerente', 'operador', 'cozinha'].map((p) => (
+                      <MenuItem key={p} value={p}>{p}</MenuItem>
+                    ))}
                   </TextField>
                 )} />
               </Grid>
@@ -100,7 +124,8 @@ export default function FuncionariosForm() {
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
                 <Controller name="email" control={control} render={({ field }) => (
-                  <TextField {...field} fullWidth label="Email" size="small" type="email" error={!!errors.email} helperText={errors.email?.message} />
+                  <TextField {...field} fullWidth label="Email" size="small" type="email"
+                    error={!!errors.email} helperText={errors.email?.message} />
                 )} />
               </Grid>
               <Grid size={{ xs: 12 }}>

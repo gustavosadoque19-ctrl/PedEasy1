@@ -8,6 +8,7 @@ import { authMiddleware } from './auth.js';
 import { getAll, getById, create, update, remove, query } from './store.js';
 import authRoutes from './routes/auth.js';
 import nfeRoutes from './routes/nfe.js';
+import funcionariosRoutes from './routes/funcionarios.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
@@ -99,7 +100,7 @@ app.get('/api/cardapio/produtos', async (req, res) => {
   res.json(data);
 });
 app.use('/api/clientes', crudRoutes('clientes'));
-app.use('/api/funcionarios', crudRoutes('funcionarios'));
+app.use('/api/funcionarios', funcionariosRoutes);
 
 const pedidosRouter = express.Router();
 

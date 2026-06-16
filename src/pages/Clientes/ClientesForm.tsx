@@ -39,7 +39,7 @@ export default function ClientesForm() {
       } else {
         await createCliente(data);
       }
-      navigate('/clientes');
+      navigate('/app/clientes');
     } catch (err: unknown) {
       const apiErr = err as { response?: { data?: { error?: string } } };
       setApiError(apiErr.response?.data?.error || 'Erro ao salvar');
@@ -53,7 +53,7 @@ export default function ClientesForm() {
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Button startIcon={<ArrowBack />} onClick={() => navigate('/clientes')}>Voltar</Button>
+        <Button startIcon={<ArrowBack />} onClick={() => navigate('/app/clientes')}>Voltar</Button>
         <Typography variant="h4">{isEditing ? 'Editar Cliente' : 'Novo Cliente'}</Typography>
       </Box>
       {apiError && <Alert severity="error" sx={{ mb: 2 }}>{apiError}</Alert>}
@@ -98,7 +98,7 @@ export default function ClientesForm() {
               </Grid>
             </Grid>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
-              <Button variant="outlined" onClick={() => navigate('/clientes')}>Cancelar</Button>
+              <Button variant="outlined" onClick={() => navigate('/app/clientes')}>Cancelar</Button>
               <Button type="submit" variant="contained" startIcon={<Save />} disabled={saving}>
                 {saving ? <CircularProgress size={20} /> : 'Salvar'}
               </Button>

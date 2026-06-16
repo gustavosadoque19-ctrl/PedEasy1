@@ -79,7 +79,7 @@ export default function FuncionariosList() {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>Funcionários</Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/funcionarios/novo')}>Novo Funcionário</Button>
+        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/app/funcionarios/novo')}>Novo Funcionário</Button>
       </Box>
 
       {erroCarregar && <Alert severity="error" sx={{ mb: 2 }}>{erroCarregar}</Alert>}
@@ -142,7 +142,7 @@ export default function FuncionariosList() {
                       <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}><Chip label={f.permissao ?? ''} size="small" variant="outlined" /></TableCell>
                       <TableCell><Chip label={f.ativo ? 'Ativo' : 'Inativo'} size="small" color={f.ativo ? 'success' : 'default'} /></TableCell>
                       <TableCell align="right">
-                        <IconButton size="small" aria-label="Editar" onClick={() => navigate(`/funcionarios/${f.id}`)}><Edit /></IconButton>
+                        <IconButton size="small" aria-label="Editar" onClick={() => navigate(`/app/funcionarios/${f.id}`)}><Edit /></IconButton>
                         <IconButton size="small" aria-label="Excluir" color="error" onClick={() => setDeleteTarget(f)}><Delete /></IconButton>
                       </TableCell>
                     </TableRow>

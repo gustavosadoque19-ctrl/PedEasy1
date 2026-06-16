@@ -34,47 +34,47 @@ interface MenuGroup {
 
 const menuGroups: MenuGroup[] = [
   {
-    items: [{ text: 'Dashboard', icon: <Dashboard />, path: '/' }],
+    items: [{ text: 'Dashboard', icon: <Dashboard />, path: '/app' }],
   },
   {
     label: 'Operacional',
     items: [
-      { text: 'Mesas', icon: <TableRestaurant />, path: '/mesas' },
-      { text: 'Pedidos', icon: <ShoppingCart />, path: '/pedidos' },
-      { text: 'Caixa', icon: <PointOfSale />, path: '/caixa' },
+      { text: 'Mesas', icon: <TableRestaurant />, path: '/app/mesas' },
+      { text: 'Pedidos', icon: <ShoppingCart />, path: '/app/pedidos' },
+      { text: 'Caixa', icon: <PointOfSale />, path: '/app/caixa' },
     ],
   },
   {
     label: 'Cadastros',
     items: [
-      { text: 'Clientes', icon: <People />, path: '/clientes' },
-      { text: 'Produtos', icon: <Fastfood />, path: '/produtos' },
-      { text: 'Funcionários', icon: <Badge />, path: '/funcionarios' },
+      { text: 'Clientes', icon: <People />, path: '/app/clientes' },
+      { text: 'Produtos', icon: <Fastfood />, path: '/app/produtos' },
+      { text: 'Funcionários', icon: <Badge />, path: '/app/funcionarios' },
     ],
   },
   {
     label: 'Gestão',
     items: [
-      { text: 'Estoque', icon: <Inventory />, path: '/estoque' },
-      { text: 'Cupons', icon: <Discount />, path: '/cupons' },
-      { text: 'Fidelidade', icon: <Stars />, path: '/fidelidade' },
-      { text: 'NPS', icon: <ThumbUpAlt />, path: '/nps' },
-      { text: 'Carrinhos', icon: <ShoppingCartCheckout />, path: '/carrinhos' },
-      { text: 'Pagamentos', icon: <Payments />, path: '/pagamentos' },
+      { text: 'Estoque', icon: <Inventory />, path: '/app/estoque' },
+      { text: 'Cupons', icon: <Discount />, path: '/app/cupons' },
+      { text: 'Fidelidade', icon: <Stars />, path: '/app/fidelidade' },
+      { text: 'NPS', icon: <ThumbUpAlt />, path: '/app/nps' },
+      { text: 'Carrinhos', icon: <ShoppingCartCheckout />, path: '/app/carrinhos' },
+      { text: 'Pagamentos', icon: <Payments />, path: '/app/pagamentos' },
     ],
   },
   {
     label: 'Relatórios',
     items: [
-      { text: 'Relatórios', icon: <Assessment />, path: '/relatorios' },
-      { text: 'NFe', icon: <Description />, path: '/nfe' },
+      { text: 'Relatórios', icon: <Assessment />, path: '/app/relatorios' },
+      { text: 'NFe', icon: <Description />, path: '/app/nfe' },
     ],
   },
   {
     label: 'Integrações',
     items: [
-      { text: 'Integrações', icon: <Link />, path: '/integracoes' },
-      { text: 'Atendimento', icon: <Chat />, path: '/atendimento' },
+      { text: 'Integrações', icon: <Link />, path: '/app/integracoes' },
+      { text: 'Atendimento', icon: <Chat />, path: '/app/atendimento' },
     ],
   },
 ];
@@ -112,7 +112,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               {group.items.map((item) => (
                 <ListItemButton
                   key={item.path}
-                  selected={location.pathname === item.path}
+                  selected={location.pathname === item.path || (item.path !== '/app' && location.pathname.startsWith(item.path + '/'))}
                   onClick={() => { navigate(item.path); if (isMobile) onClose(); }}
                   sx={{ borderRadius: 2, mb: 0.3, py: 0.6, color: '#cbd5e1', '&:hover': { bgcolor: '#334155' }, '&.Mui-selected': { bgcolor: '#2563eb', color: '#fff', '&:hover': { bgcolor: '#1d4ed8' }, '& .MuiListItemIcon-root': { color: '#fff' } } }}
                 >

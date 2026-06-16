@@ -76,7 +76,7 @@ export default function ProdutosList() {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>Produtos / Cardápio</Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/produtos/novo')}>Novo Produto</Button>
+        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/app/produtos/novo')}>Novo Produto</Button>
       </Box>
       <Card>
         <CardContent>
@@ -118,7 +118,7 @@ export default function ProdutosList() {
                       </TableCell>
                       <TableCell><Chip label={p.ativo ? 'Ativo' : 'Inativo'} size="small" color={p.ativo ? 'success' : 'default'} /></TableCell>
                       <TableCell align="right">
-                        <IconButton size="small" aria-label="Editar produto" onClick={() => navigate(`/produtos/${p.id}`)}><Edit /></IconButton>
+                        <IconButton size="small" aria-label="Editar produto" onClick={() => navigate(`/app/produtos/${p.id}`)}><Edit /></IconButton>
                         <IconButton size="small" aria-label="Excluir produto" color="error" onClick={() => setDeleteTarget(p)}><Delete /></IconButton>
                       </TableCell>
                     </TableRow>

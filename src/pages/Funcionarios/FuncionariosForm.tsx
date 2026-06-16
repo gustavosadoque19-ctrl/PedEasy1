@@ -59,7 +59,7 @@ export default function FuncionariosForm() {
       } else {
         await createFuncionario(data);
       }
-      navigate('/funcionarios');
+      navigate('/app/funcionarios');
     } catch (err: unknown) {
       setApiError(extrairMensagemErro(err));
     } finally {
@@ -74,7 +74,7 @@ export default function FuncionariosForm() {
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Button startIcon={<ArrowBack />} onClick={() => navigate('/funcionarios')}>Voltar</Button>
+        <Button startIcon={<ArrowBack />} onClick={() => navigate('/app/funcionarios')}>Voltar</Button>
         <Typography variant="h4">{isEditing ? 'Editar Funcionário' : 'Novo Funcionário'}</Typography>
       </Box>
 
@@ -135,7 +135,7 @@ export default function FuncionariosForm() {
               </Grid>
             </Grid>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
-              <Button variant="outlined" onClick={() => navigate('/funcionarios')}>Cancelar</Button>
+              <Button variant="outlined" onClick={() => navigate('/app/funcionarios')}>Cancelar</Button>
               <Button type="submit" variant="contained" startIcon={<Save />} disabled={saving}>
                 {saving ? <CircularProgress size={20} /> : 'Salvar'}
               </Button>

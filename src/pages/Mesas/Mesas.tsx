@@ -119,6 +119,9 @@ export default function Mesas() {
 
   const mountedRef = useRef(true);
 
+  const snackbarRef = useRef(snackbar);
+  useEffect(() => { snackbarRef.current = snackbar; });
+
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
@@ -142,17 +145,18 @@ export default function Mesas() {
     } catch (err) {
       if (!mountedRef.current) return;
       console.error(err);
-      snackbar.error('Erro ao carregar dados');
+      snackbarRef.current.error('Erro ao carregar dados');
     } finally {
       if (mountedRef.current) setLoading(false);
     }
-  }, [snackbar]);
+  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
     loadAll();
     return () => { mountedRef.current = false; };
-  }, [loadAll]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const mesasOcupadas = pedidos.filter(
     (p) => p.tipo === 'mesa' && p.mesa && p.status !== 'fechado' && p.status !== 'cancelado'
@@ -191,7 +195,7 @@ export default function Mesas() {
           tipo: 'mesa', mesa: String(numero), status: 'aberto',
           forma_pagamento: '', valor_total: 0, desconto: 0, observacao: '', itens: [],
         });
-        navigate(`/pedidos/${res.data.id}`);
+        navigate(`/app/pedidos/${res.data.id}`);
       } catch (err) {
         console.error(err);
       } finally {
@@ -223,7 +227,7 @@ export default function Mesas() {
         forma_pagamento: '', valor_total: 0, desconto: 0, observacao: '', itens: [],
       });
       setOpenDialog(false);
-      navigate(`/pedidos/${res.data.id}`);
+      navigate(`/app/pedidos/${res.data.id}`);
     } catch (err) {
       console.error(err);
       snackbar.error('Erro ao abrir pedido');
@@ -667,7 +671,7 @@ export default function Mesas() {
                       </Button>
                     )}
                     <Button variant="outlined" startIcon={<Visibility />}
-                      onClick={() => { setOpenDialog(false); navigate(`/pedidos/visualizar/${selectedPedido.id}`); }}
+                      onClick={() => { setOpenDialog(false);       navigate(`/app/pedidos/visualizar/${selectedPedido.id}`); }}
                       sx={{ minWidth: 100 }}>
                       Detalhes
                     </Button>
@@ -903,7 +907,7 @@ export default function Mesas() {
             ))}
           </Box>
           <Button fullWidth variant="outlined" size="small" sx={{ mt: 2 }}
-            onClick={() => { setOpenClientSearch(false); navigate('/clientes/novo'); }}>
+            onClick={() => { setOpenClientSearch(false); navigate('/app/clientes/novo'); }}>
             + Novo Cliente
           </Button>
         </DialogContent>

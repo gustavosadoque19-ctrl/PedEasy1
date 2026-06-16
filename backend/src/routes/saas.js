@@ -348,6 +348,9 @@ router.delete('/subscriptions', authMiddleware, tenantGuard, async (req, res) =>
 });
 
 router.get('/onboarding', authMiddleware, async (req, res) => {
+  if (!req.tenant_id) {
+    return res.json({ completed: false, step: 0, data: null });
+  }
   const { data: tenant } = await supabase
     .from('tenants')
     .select('config')
@@ -359,6 +362,9 @@ router.get('/onboarding', authMiddleware, async (req, res) => {
 
 router.post('/onboarding', authMiddleware, tenantGuard, async (req, res) => {
   const { step, data } = req.body;
+  if (!req.tenant_id) {
+    return res.json({ completed: true, step: 3, ...data });
+  }
   const { data: tenant } = await supabase
     .from('tenants')
     .select('config')

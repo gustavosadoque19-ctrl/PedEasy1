@@ -35,7 +35,7 @@ export default function MainLayout() {
             <Typography variant="h6" sx={{ flex: 1, color: 'text.primary' }}>PedEasy</Typography>
             {user && (
               <>
-                <IconButton aria-label="Configurações" onClick={() => navigate('/configuracoes')} sx={{ mr: 1 }} color="inherit">
+                <IconButton aria-label="Configurações" onClick={() => navigate('/app/configuracoes')} sx={{ mr: 1 }} color="inherit">
                   <Settings />
                 </IconButton>
                 <Chip label={`${user.nome} (${user.cargo})`} size="small" color="primary" variant="outlined" />

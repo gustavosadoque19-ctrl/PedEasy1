@@ -112,13 +112,13 @@ export default function Dashboard() {
           </IconButton>
         </Box>
         <Button variant="contained" size="large" startIcon={<AddShoppingCart />}
-          onClick={() => navigate('/pedidos/novo')} sx={{ py: 1.5, px: 4, fontSize: '1.1rem' }}>
+          onClick={() => navigate('/app/pedidos/novo')} sx={{ py: 1.5, px: 4, fontSize: '1.1rem' }}>
           Pedido Fácil
         </Button>
       </Box>
       {isAdmin && pendentesCount > 0 && (
         <Alert severity="info" sx={{ mb: 2 }} action={
-          <Button size="small" color="inherit" onClick={() => navigate('/funcionarios')}>
+          <Button size="small" color="inherit" onClick={() => navigate('/app/funcionarios')}>
             Gerenciar
           </Button>
         }>
@@ -143,7 +143,7 @@ export default function Dashboard() {
                     {getCardData(col.key).map((pedido) => (
                       <Card key={pedido.id} variant="outlined">
                         <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 }, cursor: 'pointer' }}
-                          onClick={() => navigate(`/pedidos/visualizar/${pedido.id}`)}>
+                          onClick={() => navigate(`/app/pedidos/visualizar/${pedido.id}`)}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Typography variant="subtitle2">#{pedido.id}</Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

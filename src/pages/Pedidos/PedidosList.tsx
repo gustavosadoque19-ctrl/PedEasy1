@@ -76,7 +76,7 @@ export default function PedidosList() {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4">Pedidos</Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/pedidos/novo')}>Novo Pedido</Button>
+        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/app/pedidos/novo')}>Novo Pedido</Button>
       </Box>
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4, width: '100%' }}><CircularProgress size={32} /></Box>
@@ -117,10 +117,10 @@ export default function PedidosList() {
       </Grid>
       )}
       <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(null)}>
-        <MenuItem onClick={() => { navigate(`/pedidos/visualizar/${selectedPedido?.id}`); setAnchorEl(null); }}>
+        <MenuItem onClick={() => { navigate(`/app/pedidos/visualizar/${selectedPedido?.id}`); setAnchorEl(null); }}>
           <Visibility sx={{ mr: 1 }} fontSize="small" /> Visualizar
         </MenuItem>
-        <MenuItem onClick={() => { navigate(`/pedidos/${selectedPedido?.id}`); setAnchorEl(null); }}>
+        <MenuItem onClick={() => { navigate(`/app/pedidos/${selectedPedido?.id}`); setAnchorEl(null); }}>
           <Edit sx={{ mr: 1 }} fontSize="small" /> Editar
         </MenuItem>
         {selectedPedido?.status === 'aberto' && (

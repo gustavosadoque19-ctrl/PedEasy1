@@ -36,9 +36,15 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         getPlanos(),
       ]);
       setTenant(tenantData);
+      if (tenantData) {
+        localStorage.setItem('tenant', JSON.stringify(tenantData));
+      } else {
+        localStorage.removeItem('tenant');
+      }
       setPlanos(planosData);
     } catch {
       setTenant(null);
+      localStorage.removeItem('tenant');
     } finally {
       setLoading(false);
     }

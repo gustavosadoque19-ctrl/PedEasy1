@@ -77,7 +77,7 @@ export default function ClientesList() {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>Clientes</Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/clientes/novo')}>
+        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/app/clientes/novo')}>
           Novo Cliente
         </Button>
       </Box>
@@ -115,7 +115,7 @@ export default function ClientesList() {
                       <Chip label={cliente.ativo ? 'Ativo' : 'Inativo'} size="small" color={cliente.ativo ? 'success' : 'default'} />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton size="small" aria-label="Editar cliente" onClick={() => navigate(`/clientes/${cliente.id}`)}><Edit /></IconButton>
+                      <IconButton size="small" aria-label="Editar cliente" onClick={() => navigate(`/app/clientes/${cliente.id}`)}><Edit /></IconButton>
                       <IconButton size="small" aria-label="Excluir cliente" color="error" onClick={() => setDeleteTarget(cliente)}><Delete /></IconButton>
                     </TableCell>
                   </TableRow>

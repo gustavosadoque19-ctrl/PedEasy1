@@ -79,7 +79,7 @@ export default function MeusClientes() {
                       <Chip label={c.ativo ? 'Ativo' : 'Inativo'} size="small" color={c.ativo ? 'success' : 'default'} />
                     </TableCell>
                     <TableCell sx={{ textAlign: 'center' }}>
-                      <IconButton size="small" onClick={() => navigate(`/clientes/${c.id}`)}><Edit fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={() => navigate(`/app/clientes/${c.id}`)}><Edit fontSize="small" /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -49,6 +49,22 @@ interface DeliveryConfig {
   horarios: { dia: string; abertura: string; fechamento: string; fechado: boolean }[];
 }
 
+function isEstabelecimentoAberto(horarios: DeliveryConfig['horarios']): boolean {
+  if (!horarios || horarios.length === 0) return true;
+  const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  const hoje = diasSemana[new Date().getDay()];
+  const hojeObj = horarios.find(h => h.dia === hoje);
+  if (!hojeObj || hojeObj.fechado) return false;
+  if (!hojeObj.abertura || !hojeObj.fechamento) return false;
+  const agora = new Date();
+  const [hA, mA] = hojeObj.abertura.split(':').map(Number);
+  const [hF, mF] = hojeObj.fechamento.split(':').map(Number);
+  const minutosAtual = agora.getHours() * 60 + agora.getMinutes();
+  const minutosAbertura = hA * 60 + mA;
+  const minutosFechamento = hF * 60 + mF;
+  return minutosAtual >= minutosAbertura && minutosAtual <= minutosFechamento;
+}
+
 function getConfig(key: string, def: string = '') {
   return localStorage.getItem(APP_PREFIX + key) || def;
 }
@@ -134,6 +150,7 @@ export default function CardapioPage() {
     }
     return deliveryConfig.horario_funcionamento || getConfig('horario_funcionamento', '');
   })();
+  const aberto = isEstabelecimentoAberto(deliveryConfig.horarios);
 
   const [form, setForm] = useState<CheckoutFormState>(() => {
     try {
@@ -212,6 +229,10 @@ export default function CardapioPage() {
   const filteredProdutos = categoriaAtiva === 'todas' ? produtos : produtos.filter((p) => p.categoria === categoriaAtiva);
 
   const addToCart = (produto: Produto) => {
+    if (!aberto) {
+      setSnack('Estabelecimento fechado no momento');
+      return;
+    }
     const pc = produto as ProdutoCardapio;
     if (pc.adicionais_disponiveis && pc.adicionais_disponiveis.length > 0) {
       setCustomizeProduto(pc);
@@ -269,6 +290,10 @@ export default function CardapioPage() {
   };
 
   const handleCheckout = async () => {
+    if (!aberto) {
+      setSnack('Estabelecimento fechado no momento');
+      return;
+    }
     const enderecoCompleto = `${form.endereco}, ${form.numero}${form.bairro ? ` - ${form.bairro}` : ''}${form.complemento ? ` (${form.complemento})` : ''}`;
     if (!form.nome || !form.telefone || !form.endereco) {
       setSnack('Preencha nome, telefone e endereço');
@@ -331,6 +356,17 @@ export default function CardapioPage() {
           </Box>
         </Box>
       </Box>
+
+      {!aberto && (
+        <Box sx={{ bgcolor: '#FFF3E0', borderBottom: '2px solid #FF9800', px: 2, py: 2, textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#E65100' }}>
+            Estabelecimento fechado no momento
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {horarioEst ? `Horário de funcionamento: ${horarioEst}` : 'Volte mais tarde'}
+          </Typography>
+        </Box>
+      )}
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}><CircularProgress /></Box>
@@ -407,7 +443,7 @@ export default function CardapioPage() {
                     )}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
                       <Typography variant="body2" color="primary" sx={{ fontWeight: 700 }}>R$ {(p.preco_venda ?? 0).toFixed(2)}</Typography>
-                      <IconButton size="small" color="primary" aria-label="Adicionar" onClick={() => addToCart(p)} sx={{ bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' } }}>
+                      <IconButton size="small" color="primary" aria-label="Adicionar" onClick={() => addToCart(p)} disabled={!aberto} sx={{ bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' }, '&.Mui-disabled': { bgcolor: '#ccc', color: '#999' } }}>
                         <Add sx={{ fontSize: 18 }} />
                       </IconButton>
                     </Box>
@@ -420,7 +456,7 @@ export default function CardapioPage() {
       )}
 
       {/* FAB Carrinho */}
-      {itensCount > 0 && (
+      {itensCount > 0 && aberto && (
         <Fab color="primary" aria-label="Carrinho" onClick={() => setCartOpen(true)}
           sx={{ position: 'fixed', bottom: 80, right: 20 }}>
           <Badge badgeContent={itensCount} color="error">
@@ -503,7 +539,7 @@ export default function CardapioPage() {
               <Typography variant="body1" sx={{ fontWeight: 700 }}>Total</Typography>
               <Typography variant="body1" color="primary" sx={{ fontWeight: 800 }}>R$ {totalPedido.toFixed(2)}</Typography>
             </Box>
-            <Button fullWidth variant="contained" size="large" disabled={cart.length === 0}
+            <Button fullWidth variant="contained" size="large" disabled={cart.length === 0 || !aberto}
               onClick={() => { setCartOpen(false); setCheckoutOpen(true); }}>
               Fechar Pedido
             </Button>

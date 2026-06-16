@@ -102,7 +102,7 @@ export default function ProdutosForm() {
       } else {
         await createProduto(toProduto(data));
       }
-      navigate('/produtos');
+      navigate('/app/produtos');
     } catch (err: unknown) {
       const apiErr = err as { response?: { data?: { error?: string } } };
       setApiError(apiErr.response?.data?.error || 'Erro ao salvar');
@@ -116,7 +116,7 @@ export default function ProdutosForm() {
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Button startIcon={<ArrowBack />} onClick={() => navigate('/produtos')}>Voltar</Button>
+        <Button startIcon={<ArrowBack />} onClick={() => navigate('/app/produtos')}>Voltar</Button>
         <Typography variant="h4">{isEditing ? 'Editar Produto' : 'Novo Produto'}</Typography>
       </Box>
       {apiError && <Alert severity="error" sx={{ mb: 2 }}>{apiError}</Alert>}
@@ -235,7 +235,7 @@ export default function ProdutosForm() {
               </Grid>
             </Grid>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
-              <Button variant="outlined" onClick={() => navigate('/produtos')}>Cancelar</Button>
+              <Button variant="outlined" onClick={() => navigate('/app/produtos')}>Cancelar</Button>
               <Button type="submit" variant="contained" startIcon={<Save />} disabled={saving}>
                 {saving ? <CircularProgress size={20} /> : 'Salvar'}
               </Button>

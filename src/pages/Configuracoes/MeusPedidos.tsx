@@ -115,10 +115,10 @@ export default function MeusPedidos() {
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ textAlign: 'center' }}>
-                      <IconButton size="small" aria-label="Visualizar pedido" onClick={() => navigate(`/pedidos/visualizar/${p.id}`)}>
+                      <IconButton size="small" aria-label="Visualizar pedido" onClick={() => navigate(`/app/pedidos/visualizar/${p.id}`)}>
                         <Visibility fontSize="small" />
                       </IconButton>
-                      <IconButton size="small" aria-label="Editar pedido" onClick={() => navigate(`/pedidos/${p.id}`)}>
+                      <IconButton size="small" aria-label="Editar pedido" onClick={() => navigate(`/app/pedidos/${p.id}`)}>
                         <Edit fontSize="small" />
                       </IconButton>
                     </TableCell>

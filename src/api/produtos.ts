@@ -67,7 +67,7 @@ export const uploadProdutoImagem = async (id: number, file: File) => {
 
 export const getImagemUrl = (filename?: string) => {
   if (!filename) return '';
-  const baseUrl = localStorage.getItem('server_url')?.replace('/api', '') || 'http://localhost:3000';
+  const baseUrl = (window.location.hostname === 'localhost' && localStorage.getItem('server_url')?.replace('/api', '')) || '';
   return `${baseUrl}/uploads/${filename}`;
 };
 

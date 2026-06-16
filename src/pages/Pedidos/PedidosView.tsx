@@ -69,7 +69,7 @@ export default function PedidosView() {
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-        <Button startIcon={<ArrowBack />} onClick={() => navigate('/pedidos')}>Voltar</Button>
+        <Button startIcon={<ArrowBack />} onClick={() => navigate('/app/pedidos')}>Voltar</Button>
         <Typography variant="h4">Pedido Nº {pedido.id}</Typography>
         <Chip label={statusLabels[pedido.status]} color={statusColors[pedido.status]} />
       </Box>

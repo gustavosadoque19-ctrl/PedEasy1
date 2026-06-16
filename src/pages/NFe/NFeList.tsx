@@ -45,7 +45,8 @@ export default function NFeList() {
     }
   })();
   return () => { cancelled = true; };
-}, [snackbar]);
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
 const load = useCallback(async () => {
   try {
@@ -59,7 +60,8 @@ const load = useCallback(async () => {
   } finally {
     if (mountedRef.current) setLoading(false);
   }
-}, [snackbar]);
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
   const handleEmitir = async () => {
     if (!pedidoId) return;

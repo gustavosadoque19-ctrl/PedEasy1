@@ -39,15 +39,18 @@ export async function getAll(collection, tenantId) {
 }
 
 export async function getById(collection, id, tenantId) {
-  const { data, error } = await supabase.from(tableName(collection)).select('*').eq('id', id).maybeSingle();
+  let query = supabase.from(tableName(collection)).select('*').eq('id', id);
+  
+  if (tenantId) {
+    query = query.filter('data->>tenant_id', 'eq', String(tenantId));
+  }
+  
+  const { data, error } = await query.maybeSingle();
   if (error) {
     console.error(`getById(${collection}, ${id}):`, error);
     return null;
   }
   const row = formatRow(data);
-  if (row && tenantId && row.tenant_id !== undefined && String(row.tenant_id) !== String(tenantId)) {
-    return null;
-  }
   return row;
 }
 
@@ -69,15 +72,19 @@ export async function create(collection, inputData, tenantId) {
   return formatRow(row);
 }
 
-export async function update(collection, id, inputData) {
+export async function update(collection, id, inputData, tenantId) {
   const table = tableName(collection);
   const { id: _, ...data } = inputData;
-  const { data: row, error } = await supabase
+  let query = supabase
     .from(table)
     .update({ data, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
+    .eq('id', id);
+  
+  if (tenantId) {
+    query = query.filter('data->>tenant_id', 'eq', String(tenantId));
+  }
+  
+  const { data: row, error } = await query.select().single();
   if (error) {
     console.error(`update(${collection}, ${id}):`, error);
     return null;
@@ -85,9 +92,15 @@ export async function update(collection, id, inputData) {
   return formatRow(row);
 }
 
-export async function remove(collection, id) {
+export async function remove(collection, id, tenantId) {
   const table = tableName(collection);
-  const { error } = await supabase.from(table).delete().eq('id', id);
+  let query = supabase.from(table).delete().eq('id', id);
+  
+  if (tenantId) {
+    query = query.filter('data->>tenant_id', 'eq', String(tenantId));
+  }
+  
+  const { error } = await query;
   if (error) {
     console.error(`remove(${collection}, ${id}):`, error);
     return false;

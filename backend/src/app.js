@@ -40,7 +40,7 @@ const upload = multer({
   },
 });
 
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
 const app = express();
 app.use(cors({ origin: CORS_ORIGIN }));
@@ -78,13 +78,13 @@ function crudRoutes(collection) {
   });
 
   router.put('/:id', async (req, res) => {
-    const item = await update(collection, Number(req.params.id), req.body);
+    const item = await update(collection, Number(req.params.id), req.body, req.tenant_id);
     if (!item) return res.status(404).json({ error: `${collection} não encontrado` });
     res.json(item);
   });
 
   router.delete('/:id', async (req, res) => {
-    const ok = await remove(collection, Number(req.params.id));
+    const ok = await remove(collection, Number(req.params.id), req.tenant_id);
     if (!ok) return res.status(404).json({ error: `${collection} não encontrado` });
     res.status(204).send();
   });
@@ -95,9 +95,22 @@ function crudRoutes(collection) {
 app.use('/api/produtos', crudRoutes('produtos'));
 
 app.get('/api/cardapio/produtos', async (req, res) => {
-  const todosProdutos = await getAll('produtos');
-  const todosAdicionais = await getAll('adicionais');
-  const todasCategorias = await getAll('categorias-adicionais');
+  const { slug } = req.query;
+  let tenantId = null;
+  if (slug) {
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle();
+    if (!tenant) return res.status(404).json({ error: 'Estabelecimento não encontrado' });
+    tenantId = tenant.id;
+  }
+  const [todosProdutos, todosAdicionais, todasCategorias] = await Promise.all([
+    getAll('produtos', tenantId),
+    getAll('adicionais', tenantId),
+    getAll('categorias-adicionais', tenantId),
+  ]);
   const produtos = todosProdutos.filter((p) => p.ativo !== false);
   const adicionais = todosAdicionais.filter((a) => a.ativo !== false);
   const categorias = todasCategorias.filter((c) => c.ativo !== false);
@@ -122,9 +135,11 @@ app.get('/api/cardapio/:slug/produtos', async (req, res) => {
     .maybeSingle();
   if (!tenant) return res.status(404).json({ error: 'Estabelecimento não encontrado' });
 
-  const todosProdutos = await getAll('produtos', tenant.id);
-  const todosAdicionais = await getAll('adicionais', tenant.id);
-  const todasCategorias = await getAll('categorias-adicionais', tenant.id);
+  const [todosProdutos, todosAdicionais, todasCategorias] = await Promise.all([
+    getAll('produtos', tenant.id),
+    getAll('adicionais', tenant.id),
+    getAll('categorias-adicionais', tenant.id),
+  ]);
   const produtos = todosProdutos.filter((p) => p.ativo !== false);
   const adicionais = todosAdicionais.filter((a) => a.ativo !== false);
   const categorias = todasCategorias.filter((c) => c.ativo !== false);
@@ -178,7 +193,7 @@ pedidosRouter.put('/:id', async (req, res) => {
   const item = await getById('pedidos', Number(req.params.id), req.tenant_id);
   if (!item) return res.status(404).json({ error: 'Pedido não encontrado' });
 
-  const updated = await update('pedidos', Number(req.params.id), req.body);
+  const updated = await update('pedidos', Number(req.params.id), req.body, req.tenant_id);
   if (!updated) return res.status(500).json({ error: 'Erro ao atualizar pedido' });
 
   const newStatus = req.body.status;
@@ -199,7 +214,7 @@ pedidosRouter.put('/:id', async (req, res) => {
       };
       await update('caixa', caixa.id, {
         movimentos: [...(caixa.movimentos || []), mov],
-      });
+      }, req.tenant_id);
     }
   }
 
@@ -207,7 +222,7 @@ pedidosRouter.put('/:id', async (req, res) => {
 });
 
 pedidosRouter.delete('/:id', async (req, res) => {
-  const ok = await remove('pedidos', Number(req.params.id));
+  const ok = await remove('pedidos', Number(req.params.id), req.tenant_id);
   if (!ok) return res.status(404).json({ error: 'Pedido não encontrado' });
   res.status(204).send();
 });
@@ -242,7 +257,7 @@ app.post('/api/caixa/fechar/:id', authMiddleware, tenantGuard, tenantRateLimit, 
     status: 'fechado',
     data_fechamento: new Date().toISOString(),
     saldo_final: caixa.saldo_inicial + totalEntradas - totalSaidas,
-  });
+  }, req.tenant_id);
   res.json(updated);
 });
 
@@ -252,7 +267,7 @@ app.post('/api/caixa/movimento', authMiddleware, tenantGuard, tenantRateLimit, a
   const mov = { ...req.body, createdAt: new Date().toISOString() };
   const updated = await update('caixa', caixa.id, {
     movimentos: [...(caixa.movimentos || []), mov],
-  });
+  }, req.tenant_id);
   res.status(201).json(mov);
 });
 
@@ -261,9 +276,18 @@ app.get('/api/caixa/historico', authMiddleware, tenantGuard, tenantRateLimit, as
 });
 
 app.post('/api/cardapio/pedidos', async (req, res) => {
-  const { cliente_nome, cliente_telefone, endereco_entrega, forma_pagamento, observacao, itens, taxa_entrega, troco_para } = req.body;
+  const { slug, cliente_nome, cliente_telefone, endereco_entrega, forma_pagamento, observacao, itens, taxa_entrega, troco_para } = req.body;
   if (!cliente_nome || !cliente_telefone || !itens?.length) {
     return res.status(400).json({ error: 'Nome, telefone e itens são obrigatórios' });
+  }
+  let tenantId = null;
+  if (slug) {
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle();
+    if (tenant) tenantId = tenant.id;
   }
   const valor_itens = itens.reduce((s, i) => s + (i.total || i.quantidade * i.preco_unitario), 0);
   const pedido = await create('pedidos', {
@@ -271,12 +295,23 @@ app.post('/api/cardapio/pedidos', async (req, res) => {
     itens, taxa_entrega: taxa_entrega || 0, troco_para: troco_para || 0,
     tipo: 'delivery', status: 'aberto', funcionario_id: 0, funcionario_nome: 'Cardápio Digital',
     valor_total: valor_itens + (taxa_entrega || 0), desconto: 0,
-  });
+  }, tenantId);
   res.status(201).json(pedido);
 });
 
 app.get('/api/config/delivery', async (req, res) => {
-  const stored = await getAll('config_delivery');
+  const { slug } = req.query;
+  let tenantId = null;
+  if (slug) {
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle();
+    if (!tenant) return res.status(404).json({ error: 'Estabelecimento não encontrado' });
+    tenantId = tenant.id;
+  }
+  const stored = await getAll('config_delivery', tenantId);
   const config = stored[0] || {};
   res.json({
     taxa_entrega: config.taxa_entrega ?? (parseFloat(process.env.TAXA_ENTREGA || '0') || 0),
@@ -294,8 +329,8 @@ app.get('/api/config/delivery', async (req, res) => {
   });
 });
 
-app.put('/api/config/delivery', async (req, res) => {
-  const stored = await getAll('config_delivery');
+app.put('/api/config/delivery', authMiddleware, tenantGuard, tenantRateLimit, async (req, res) => {
+  const stored = await getAll('config_delivery', req.tenant_id);
   const body = req.body;
   if (body.horarios) {
     const abertos = body.horarios.filter((h) => !h.fechado);
@@ -306,10 +341,10 @@ app.put('/api/config/delivery', async (req, res) => {
     body.horario_funcionamento = partes.join(', ');
   }
   if (stored.length > 0) {
-    const updated = await update('config_delivery', stored[0].id, body);
+    const updated = await update('config_delivery', stored[0].id, body, req.tenant_id);
     res.json(updated);
   } else {
-    const item = await create('config_delivery', body);
+    const item = await create('config_delivery', body, req.tenant_id);
     res.json(item);
   }
 });
@@ -365,7 +400,7 @@ app.get('/api/fidelidade/config', authMiddleware, tenantGuard, tenantRateLimit, 
 app.put('/api/fidelidade/config', authMiddleware, tenantGuard, tenantRateLimit, async (req, res) => {
   const configs = await getAll('fidelidade_config', req.tenant_id);
   if (configs.length > 0) {
-    const updated = await update('fidelidade_config', configs[0].id, req.body);
+    const updated = await update('fidelidade_config', configs[0].id, req.body, req.tenant_id);
     res.json(updated);
   } else {
     const item = await create('fidelidade_config', req.body, req.tenant_id);
@@ -389,7 +424,7 @@ app.post('/api/fidelidade/pontos', authMiddleware, tenantGuard, tenantRateLimit,
   const clientes = await getAll('fidelidade_clientes', req.tenant_id);
   let record = clientes.find((c) => c.cliente_id === cliente_id);
   if (record) {
-    record = await update('fidelidade_clientes', record.id, { pontos: (record.pontos || 0) + pontos });
+    record = await update('fidelidade_clientes', record.id, { pontos: (record.pontos || 0) + pontos }, req.tenant_id);
   } else {
     record = await create('fidelidade_clientes', { cliente_id, pontos, total_gasto: 0 }, req.tenant_id);
   }
@@ -402,14 +437,14 @@ app.post('/api/fidelidade/resgatar', authMiddleware, tenantGuard, tenantRateLimi
   const record = clientes.find((c) => c.cliente_id === cliente_id);
   if (!record) return res.status(404).json({ error: 'Cliente não encontrado' });
   if ((record.pontos || 0) < pontos) return res.status(400).json({ error: 'Pontos insuficientes' });
-  const updated = await update('fidelidade_clientes', record.id, { pontos: (record.pontos || 0) - pontos });
+  const updated = await update('fidelidade_clientes', record.id, { pontos: (record.pontos || 0) - pontos }, req.tenant_id);
   res.json(updated);
 });
 
 app.post('/api/carrinhos/:id/lembrete', authMiddleware, tenantGuard, tenantRateLimit, async (req, res) => {
   const carrinho = await getById('carrinhos', Number(req.params.id), req.tenant_id);
   if (!carrinho) return res.status(404).json({ error: 'Carrinho não encontrado' });
-  await update('carrinhos', carrinho.id, { whatsapp_enviado: true });
+  await update('carrinhos', carrinho.id, { whatsapp_enviado: true }, req.tenant_id);
   res.json({ success: true, message: 'Lembrete enviado' });
 });
 
@@ -459,6 +494,10 @@ app.post('/api/pagamentos/pix', authMiddleware, tenantGuard, tenantRateLimit, as
 app.post('/api/pagamentos/cartao', authMiddleware, tenantGuard, tenantRateLimit, async (req, res) => {
   const { pedido_id, valor, parcelas = 1, card } = req.body;
   if (!pedido_id || !valor || !card) return res.status(400).json({ error: 'pedido_id, valor e card são obrigatórios' });
+  
+  if (!card.number || !card.holder_name || !card.exp_month || !card.exp_year || !card.cvv) {
+    return res.status(400).json({ error: 'Dados do cartão incompletos. Campos obrigatórios: número, titular, mês de validade, ano de validade, CVV' });
+  }
 
   try {
     let customerId = req.tenant.pagarme_customer_id;
@@ -524,7 +563,7 @@ app.get('/api/pagamentos/pix/status/:transacaoId', authMiddleware, tenantGuard, 
 app.post('/api/integracoes/:id/sync', authMiddleware, tenantGuard, tenantRateLimit, async (req, res) => {
   const integracao = await getById('integracoes', Number(req.params.id), req.tenant_id);
   if (!integracao) return res.status(404).json({ error: 'Integração não encontrada' });
-  await update('integracoes', integracao.id, { ultima_sync: new Date().toISOString() });
+  await update('integracoes', integracao.id, { ultima_sync: new Date().toISOString() }, req.tenant_id);
   res.json({ success: true, message: 'Sincronizado com sucesso' });
 });
 
@@ -537,7 +576,7 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 app.post('/api/produtos/:id/imagem', authMiddleware, tenantGuard, tenantRateLimit, (req, res) => {
   upload.single('imagem')(req, res, async (err) => {
     if (err) {
-      if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+      if (err instanceof multer.MulerError && err.code === 'LIMIT_FILE_SIZE') {
         return res.status(400).json({ error: 'Arquivo muito grande. Máximo: 5MB' });
       }
       return res.status(400).json({ error: err.message || 'Erro ao fazer upload' });
@@ -545,7 +584,7 @@ app.post('/api/produtos/:id/imagem', authMiddleware, tenantGuard, tenantRateLimi
     if (!req.file) return res.status(400).json({ error: 'Nenhuma imagem enviada' });
     const produto = await getById('produtos', Number(req.params.id), req.tenant_id);
     if (!produto) return res.status(404).json({ error: 'Produto não encontrado' });
-    const updated = await update('produtos', produto.id, { imagem: req.file.filename });
+    const updated = await update('produtos', produto.id, { imagem: req.file.filename }, req.tenant_id);
     res.json(updated);
   });
 });

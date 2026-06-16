@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type ChangeEvent } from 'react';
+import { useParams } from 'react-router-dom';
 import type { SelectChangeEvent } from '@mui/material/Select';
 
 type CheckoutFormState = {
@@ -68,6 +69,7 @@ function groupAdicionaisByCategoria(adicionais: Adicional[]): Map<string, Adicio
 }
 
 export default function CardapioPage() {
+  const { slug } = useParams<{ slug: string }>();
   const [produtos, setProdutos] = useState<ProdutoCardapio[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoriaAtiva, setCategoriaAtiva] = useState('todas');
@@ -148,8 +150,8 @@ export default function CardapioPage() {
       setLoading(true);
       try {
         const [prodRes, cfgRes, adicRes] = await Promise.all([
-          getProdutosCardapio(),
-          getDeliveryConfig(),
+          getProdutosCardapio(slug),
+          getDeliveryConfig(slug),
           getAdicionais(),
         ]);
         if (!cancelled) {
@@ -289,6 +291,7 @@ export default function CardapioPage() {
         adicionais: i.adicionais,
       }));
       const res = await criarPedidoDelivery({
+        slug,
         cliente_nome: form.nome,
         cliente_telefone: form.telefone,
         endereco_entrega: enderecoCompleto,

@@ -5,9 +5,10 @@ interface MockResponse<T> {
   data: T;
 }
 
-export async function getProdutosCardapio() {
+export async function getProdutosCardapio(slug?: string) {
   try {
-    return await api.get<Produto[]>('/cardapio/produtos');
+    const params = slug ? { slug } : {};
+    return await api.get<Produto[]>('/cardapio/produtos', { params });
   } catch {
     console.warn('⚠️ API indisponível, usando dados locais');
     const stored = localStorage.getItem('mock_produtos');
@@ -17,6 +18,7 @@ export async function getProdutosCardapio() {
 }
 
 export async function criarPedidoDelivery(data: {
+  slug?: string;
   cliente_nome: string;
   cliente_telefone: string;
   endereco_entrega: string;
@@ -50,9 +52,10 @@ export async function criarPedidoDelivery(data: {
   }
 }
 
-export async function getDeliveryConfig() {
+export async function getDeliveryConfig(slug?: string) {
   try {
-    return await api.get('/config/delivery');
+    const params = slug ? { slug } : {};
+    return await api.get('/config/delivery', { params });
   } catch {
     return { data: { taxa_entrega: 0, tempo_estimado: '30-50 min', horario_funcionamento: '', horarios: [] } } as MockResponse<{
       taxa_entrega: number;

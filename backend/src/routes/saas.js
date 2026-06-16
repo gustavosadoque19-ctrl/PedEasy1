@@ -315,6 +315,9 @@ router.post('/webhooks', async (req, res) => {
 });
 
 router.get('/assinatura', authMiddleware, async (req, res) => {
+  if (!req.tenant_id) {
+    return res.json(null);
+  }
   const { data: tenant } = await supabase
     .from('tenants')
     .select('*')

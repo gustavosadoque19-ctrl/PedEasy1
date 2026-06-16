@@ -1,7 +1,7 @@
 import rateLimit from 'express-rate-limit';
 
 const WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
-const MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_MAX || '100', 10);
+const MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_MAX || '300', 10);
 
 const globalLimiter = rateLimit({
   windowMs: WINDOW_MS,

@@ -6,6 +6,7 @@ export interface SignupData {
   nome: string;
   email: string;
   senha: string;
+  recaptcha_token: string;
 }
 
 export interface SignupResult {
@@ -17,6 +18,7 @@ export interface SignupResult {
 export interface LoginData {
   email: string;
   senha: string;
+  recaptcha_token: string;
 }
 
 export interface LoginResult {

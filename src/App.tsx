@@ -58,9 +58,9 @@ function AppRoutes() {
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/app" /> : <Login />} />
-        <Route path="/signup" element={isAuthenticated ? <Navigate to="/app" /> : <Signup />} />
+        <Route path="/" element={<ErrorBoundary><Landing /></ErrorBoundary>} />
+        <Route path="/login" element={<ErrorBoundary>{isAuthenticated ? <Navigate to="/app" /> : <Login />}</ErrorBoundary>} />
+        <Route path="/signup" element={<ErrorBoundary>{isAuthenticated ? <Navigate to="/app" /> : <Signup />}</ErrorBoundary>} />
         <Route path="/cardapio" element={<ErrorBoundary><CardapioPage /></ErrorBoundary>} />
         <Route path="/cardapio/:slug" element={<ErrorBoundary><CardapioPage /></ErrorBoundary>} />
         <Route path="/app" element={<PrivateRoute><TenantProvider><MainLayout /></TenantProvider></PrivateRoute>}>

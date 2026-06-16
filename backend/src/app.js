@@ -550,4 +550,12 @@ app.post('/api/produtos/:id/imagem', authMiddleware, tenantGuard, tenantRateLimi
   });
 });
 
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.parse.failed' || (err instanceof SyntaxError && 'body' in err)) {
+    return res.status(400).json({ error: 'JSON inválido no corpo da requisição' });
+  }
+  console.error('Erro não tratado:', err);
+  res.status(500).json({ error: 'Erro interno do servidor' });
+});
+
 export default app;

@@ -4,11 +4,21 @@ import jwt from 'jsonwebtoken';
 import { supabase } from '../supabaseClient.js';
 import { authMiddleware } from '../auth.js';
 import { tenantGuard } from '../middleware/tenantGuard.js';
+import { recaptchaMiddleware } from '../middleware/recaptcha.js';
+import rateLimit from 'express-rate-limit';
 import { getAll, getById, create, update } from '../store.js';
 import * as pagarme from '../pagarme.js';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'pedy-dev-secret-key-change-in-production';
+
+const signupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas tentativas de cadastro. Tente novamente em 15 minutos.' },
+});
 
 const PLAN_IDS = {
   pro: process.env.PAGARME_PLAN_PRO,
@@ -58,7 +68,7 @@ function formatTenant(t) {
   };
 }
 
-router.post('/signup', async (req, res) => {
+router.post('/signup', signupLimiter, recaptchaMiddleware, async (req, res) => {
   const { tenant_name, nome, email, senha } = req.body;
   if (!tenant_name || !nome || !email || !senha) {
     return res.status(400).json({ error: 'tenant_name, nome, email e senha são obrigatórios' });
@@ -135,7 +145,7 @@ router.post('/signup', async (req, res) => {
   });
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', recaptchaMiddleware, async (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) {
     return res.status(400).json({ error: 'Email e senha obrigatórios' });

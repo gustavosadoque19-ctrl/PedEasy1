@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Box, Card, CardContent, TextField, Button, Typography, Alert, CircularProgress, Link } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import Fastfood from '@mui/icons-material/Fastfood';
 import { useAuth } from '../../contexts/AuthContext';
+import ReCaptcha, { ReCaptchaHandle } from '../../components/ReCaptcha';
 
 export default function Signup() {
   const [tenantName, setTenantName] = useState('');
@@ -14,10 +15,12 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const { signupTenant } = useAuth();
   const navigate = useNavigate();
+  const captchaRef = useRef<ReCaptchaHandle>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
     if (senha !== confirmar) {
       setError('Senhas não conferem');
       return;
@@ -26,13 +29,21 @@ export default function Signup() {
       setError('Senha deve ter no mínimo 6 caracteres');
       return;
     }
+
+    const recaptchaToken = captchaRef.current?.getToken();
+    if (!recaptchaToken) {
+      setError('Confirme que você não é um robô');
+      return;
+    }
+
     setLoading(true);
     try {
-      await signupTenant({ tenant_name: tenantName, nome, email, senha });
+      await signupTenant({ tenant_name: tenantName, nome, email, senha, recaptcha_token: recaptchaToken });
       navigate('/app/onboarding');
     } catch (err: unknown) {
       const apiErr = err as { response?: { data?: { error?: string } } };
       setError(apiErr.response?.data?.error || 'Erro ao criar conta');
+      captchaRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -75,7 +86,10 @@ export default function Signup() {
               Confirmar senha
             </Typography>
             <TextField fullWidth size="small" type="password" value={confirmar} onChange={(e) => setConfirmar(e.target.value)}
-              sx={{ mb: 3.5 }} required placeholder="Repita a senha" />
+              sx={{ mb: 2.5 }} required placeholder="Repita a senha" />
+            <Box sx={{ mb: 2.5, display: 'flex', justifyContent: 'center' }}>
+              <ReCaptcha ref={captchaRef} />
+            </Box>
             <Button fullWidth type="submit" variant="contained" size="large" disabled={loading} sx={{ py: 1.5, mb: 1 }}>
               {loading ? <CircularProgress size={22} color="inherit" /> : 'Criar Conta Grátis'}
             </Button>

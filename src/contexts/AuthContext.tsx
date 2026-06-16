@@ -9,8 +9,8 @@ interface AuthContextType {
   token: string | null;
   tenant: Tenant | null;
   loading: boolean;
-  login: (usuario: string, senha: string) => Promise<void>;
-  loginEmail: (email: string, senha: string) => Promise<void>;
+  login: (usuario: string, senha: string, recaptchaToken?: string) => Promise<void>;
+  loginEmail: (email: string, senha: string, recaptchaToken?: string) => Promise<void>;
   signupTenant: (data: SignupData) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -56,8 +56,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(devUser);
   };
 
-  const login = async (usuario: string, senha: string) => {
-    const response = await api.post('/auth/login', { usuario, senha });
+  const login = async (usuario: string, senha: string, recaptchaToken?: string) => {
+    const response = await api.post('/auth/login', { usuario, senha, recaptcha_token: recaptchaToken });
     const { token: newToken, user: userData } = response.data;
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(userData));
@@ -65,8 +65,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
   };
 
-  const loginEmail = async (email: string, senha: string) => {
-    const result = await loginSaas({ email, senha });
+  const loginEmail = async (email: string, senha: string, recaptchaToken?: string) => {
+    const result = await loginSaas({ email, senha, recaptcha_token: recaptchaToken || '' });
     localStorage.setItem('token', result.token);
     localStorage.setItem('user', JSON.stringify(result.user));
     localStorage.setItem('tenant', JSON.stringify(result.tenant));

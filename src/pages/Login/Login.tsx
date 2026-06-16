@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Box, Card, CardContent, TextField, Button, Typography, Alert, CircularProgress, useMediaQuery, useTheme, Paper, Link } from '@mui/material';
 import Fastfood from '@mui/icons-material/Fastfood';
 import RestaurantMenu from '@mui/icons-material/RestaurantMenu';
@@ -6,6 +6,7 @@ import LocalOffer from '@mui/icons-material/LocalOffer';
 import People from '@mui/icons-material/People';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import ReCaptcha, { ReCaptchaHandle } from '../../components/ReCaptcha';
 
 function MobileLogin() {
   const [emailOrUser, setEmailOrUser] = useState('');
@@ -15,22 +16,31 @@ function MobileLogin() {
   const [loading, setLoading] = useState(false);
   const { login, loginEmail, loginDev } = useAuth();
   const navigate = useNavigate();
+  const captchaRef = useRef<ReCaptchaHandle>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const recaptchaToken = captchaRef.current?.getToken();
+    if (!recaptchaToken) {
+      setError('Confirme que você não é um robô');
+      return;
+    }
+
     setLoading(true);
     localStorage.setItem('server_url', serverUrl);
     try {
       if (emailOrUser.includes('@')) {
-        await loginEmail(emailOrUser, senha);
+        await loginEmail(emailOrUser, senha, recaptchaToken);
       } else {
-        await login(emailOrUser, senha);
+        await login(emailOrUser, senha, recaptchaToken);
       }
       navigate('/app');
     } catch (err: unknown) {
       const apiErr = err as { response?: { data?: { error?: string } } };
       setError(apiErr.response?.data?.error || 'Erro ao conectar. Verifique servidor e credenciais.');
+      captchaRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -51,7 +61,10 @@ function MobileLogin() {
           <Box component="form" onSubmit={handleSubmit}>
             <TextField fullWidth label="Servidor" size="small" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} sx={{ mb: 2 }} />
             <TextField fullWidth label="Email ou Usuário" size="small" value={emailOrUser} onChange={(e) => setEmailOrUser(e.target.value)} sx={{ mb: 2 }} required />
-            <TextField fullWidth label="Senha" type="password" size="small" value={senha} onChange={(e) => setSenha(e.target.value)} sx={{ mb: 3 }} required />
+            <TextField fullWidth label="Senha" type="password" size="small" value={senha} onChange={(e) => setSenha(e.target.value)} sx={{ mb: 2 }} required />
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+              <ReCaptcha ref={captchaRef} />
+            </Box>
             {import.meta.env.DEV && <Button fullWidth variant="outlined" size="large" onClick={loginDev} sx={{ mb: 1 }}>Acesso Admin (Dev)</Button>}
             <Button fullWidth type="submit" variant="contained" size="large" disabled={loading}>
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
@@ -81,22 +94,31 @@ function DesktopLogin() {
   const [loading, setLoading] = useState(false);
   const { login, loginEmail, loginDev } = useAuth();
   const navigate = useNavigate();
+  const captchaRef = useRef<ReCaptchaHandle>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const recaptchaToken = captchaRef.current?.getToken();
+    if (!recaptchaToken) {
+      setError('Confirme que você não é um robô');
+      return;
+    }
+
     setLoading(true);
     localStorage.setItem('server_url', serverUrl);
     try {
       if (emailOrUser.includes('@')) {
-        await loginEmail(emailOrUser, senha);
+        await loginEmail(emailOrUser, senha, recaptchaToken);
       } else {
-        await login(emailOrUser, senha);
+        await login(emailOrUser, senha, recaptchaToken);
       }
       navigate('/app');
     } catch (err: unknown) {
       const apiErr = err as { response?: { data?: { error?: string } } };
       setError(apiErr.response?.data?.error || 'Erro ao conectar. Verifique servidor e credenciais.');
+      captchaRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -206,7 +228,10 @@ function DesktopLogin() {
             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Email ou Usuário</Typography>
             <TextField fullWidth size="small" value={emailOrUser} onChange={(e) => setEmailOrUser(e.target.value)} sx={{ mb: 2.5 }} required placeholder="Digite seu email ou usuário" />
             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Senha</Typography>
-            <TextField fullWidth size="small" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} sx={{ mb: 3.5 }} required placeholder="Digite sua senha" />
+            <TextField fullWidth size="small" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} sx={{ mb: 2.5 }} required placeholder="Digite sua senha" />
+            <Box sx={{ mb: 2.5, display: 'flex', justifyContent: 'center' }}>
+              <ReCaptcha ref={captchaRef} />
+            </Box>
             {import.meta.env.DEV && (
               <Button fullWidth variant="outlined" size="medium" onClick={loginDev} sx={{ mb: 1.5 }}>
                 Acesso Admin (Dev)

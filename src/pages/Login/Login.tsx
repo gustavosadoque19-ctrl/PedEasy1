@@ -23,10 +23,6 @@ function MobileLogin() {
     setError('');
 
     const recaptchaToken = captchaRef.current?.getToken();
-    if (!recaptchaToken) {
-      setError('Confirme que você não é um robô');
-      return;
-    }
 
     setLoading(true);
     localStorage.setItem('server_url', serverUrl);
@@ -101,10 +97,6 @@ function DesktopLogin() {
     setError('');
 
     const recaptchaToken = captchaRef.current?.getToken();
-    if (!recaptchaToken) {
-      setError('Confirme que você não é um robô');
-      return;
-    }
 
     setLoading(true);
     localStorage.setItem('server_url', serverUrl);

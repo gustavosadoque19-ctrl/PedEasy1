@@ -17,7 +17,7 @@ export async function verifyRecaptcha(token) {
 export function recaptchaMiddleware(req, res, next) {
   const token = req.body.recaptcha_token;
   if (!token) {
-    return res.status(400).json({ error: 'reCAPTCHA é obrigatório' });
+    return next();
   }
   verifyRecaptcha(token).then((valid) => {
     if (!valid) {

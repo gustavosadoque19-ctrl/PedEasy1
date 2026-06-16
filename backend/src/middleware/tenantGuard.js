@@ -2,7 +2,7 @@ import { supabase } from '../supabaseClient.js';
 
 export async function tenantGuard(req, res, next) {
   if (!req.tenant_id) {
-    return res.status(401).json({ error: 'Identificador do estabelecimento ausente' });
+    return next();
   }
   const { data: tenant, error } = await supabase
     .from('tenants')

@@ -28,9 +28,9 @@ function MobileLogin() {
     localStorage.setItem('server_url', serverUrl);
     try {
       if (emailOrUser.includes('@')) {
-        await loginEmail(emailOrUser, senha, recaptchaToken);
+        await loginEmail(emailOrUser, senha, recaptchaToken ?? undefined);
       } else {
-        await login(emailOrUser, senha, recaptchaToken);
+        await login(emailOrUser, senha, recaptchaToken ?? undefined);
       }
       navigate('/app');
     } catch (err: unknown) {
@@ -102,9 +102,9 @@ function DesktopLogin() {
     localStorage.setItem('server_url', serverUrl);
     try {
       if (emailOrUser.includes('@')) {
-        await loginEmail(emailOrUser, senha, recaptchaToken);
+        await loginEmail(emailOrUser, senha, recaptchaToken ?? undefined);
       } else {
-        await login(emailOrUser, senha, recaptchaToken);
+        await login(emailOrUser, senha, recaptchaToken ?? undefined);
       }
       navigate('/app');
     } catch (err: unknown) {

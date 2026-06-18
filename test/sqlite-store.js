@@ -34,6 +34,10 @@ export function initTenantDb(tenantId) {
   db.close();
 }
 
+const JSON_COLS = new Set([
+  'itens', 'movimentos', 'adicionais_ids', 'horarios', 'config', 'dados',
+]);
+
 const TABLE_MAP = {
   'categorias-adicionais': 'categorias_adicionais',
   'fidelidade_clientes': 'fidelidade_clientes',
@@ -57,18 +61,33 @@ function filterValidColumns(db, table, data) {
   return filtered;
 }
 
+function parseRow(row) {
+  if (!row) return null;
+  const parsed = { ...row };
+  for (const col of Object.keys(parsed)) {
+    if (JSON_COLS.has(col) && typeof parsed[col] === 'string') {
+      try { parsed[col] = JSON.parse(parsed[col]); } catch {}
+    }
+  }
+  return parsed;
+}
+
+function parseRows(rows) {
+  return rows.map(parseRow);
+}
+
 export async function getAll(collection, tenantId) {
   const db = getDb(tenantId);
-  const rows = db.prepare(`SELECT * FROM ${tableName(collection)} ORDER BY id`).all();
+  const rows = parseRows(db.prepare(`SELECT * FROM ${tableName(collection)} ORDER BY id`).all());
   db.close();
   return rows;
 }
 
 export async function getById(collection, id, tenantId) {
   const db = getDb(tenantId);
-  const row = db.prepare(`SELECT * FROM ${tableName(collection)} WHERE id = ?`).get(id);
+  const row = parseRow(db.prepare(`SELECT * FROM ${tableName(collection)} WHERE id = ?`).get(id));
   db.close();
-  return row || null;
+  return row;
 }
 
 export async function create(collection, inputData, tenantId) {
@@ -77,6 +96,12 @@ export async function create(collection, inputData, tenantId) {
   const data = filterValidColumns(db, table, { ...inputData });
   if (data.id) delete data.id;
 
+  for (const col of Object.keys(data)) {
+    if (JSON_COLS.has(col) && typeof data[col] !== 'string') {
+      data[col] = JSON.stringify(data[col]);
+    }
+  }
+
   const cols = Object.keys(data);
   const vals = Object.values(data);
   const placeholders = vals.map(() => '?').join(', ');
@@ -84,7 +109,7 @@ export async function create(collection, inputData, tenantId) {
   const stmt = db.prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`);
   const result = stmt.run(...vals);
 
-  const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(result.lastInsertRowid);
+  const row = parseRow(db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(result.lastInsertRowid));
   db.close();
   return row;
 }
@@ -95,13 +120,19 @@ export async function update(collection, id, inputData, tenantId) {
   const data = filterValidColumns(db, table, { ...inputData, updated_at: new Date().toISOString() });
   if (data.id) delete data.id;
 
+  for (const col of Object.keys(data)) {
+    if (JSON_COLS.has(col) && typeof data[col] !== 'string') {
+      data[col] = JSON.stringify(data[col]);
+    }
+  }
+
   const setClause = Object.keys(data).map(k => `${k} = ?`).join(', ');
   const vals = [...Object.values(data), id];
 
   db.prepare(`UPDATE ${table} SET ${setClause} WHERE id = ?`).run(...vals);
-  const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id);
+  const row = parseRow(db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id));
   db.close();
-  return row || null;
+  return row;
 }
 
 export async function remove(collection, id, tenantId) {

@@ -67,7 +67,8 @@ export const uploadProdutoImagem = async (id: number, file: File) => {
 
 export const getImagemUrl = (filename?: string) => {
   if (!filename) return '';
-  const baseUrl = (window.location.hostname === 'localhost' && localStorage.getItem('server_url')?.replace('/api', '')) || '';
+  const apiUrl = import.meta.env.VITE_API_URL || '';
+  const baseUrl = apiUrl.replace(/\/api\/?$/, '') || (window.location.hostname === 'localhost' && localStorage.getItem('server_url')?.replace('/api', '')) || '';
   return `${baseUrl}/uploads/${filename}`;
 };
 

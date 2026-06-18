@@ -6,12 +6,12 @@ import * as focus from '../focus.js';
 const router = Router();
 
 router.get('/', authMiddleware, async (req, res) => {
-  const list = await getAll('nfe');
+  const list = await getAll('nfe', req.tenant_id);
   res.json(list);
 });
 
 router.get('/:id', authMiddleware, async (req, res) => {
-  const item = await getById('nfe', Number(req.params.id));
+  const item = await getById('nfe', Number(req.params.id), req.tenant_id);
   if (!item) return res.status(404).json({ error: 'NFe não encontrada' });
   res.json(item);
 });
@@ -21,10 +21,10 @@ router.post('/emitir', authMiddleware, async (req, res) => {
     const { pedido_id } = req.body;
     if (!pedido_id) return res.status(400).json({ error: 'pedido_id é obrigatório' });
 
-    const pedido = await getById('pedidos', Number(pedido_id));
+    const pedido = await getById('pedidos', Number(pedido_id), req.tenant_id);
     if (!pedido) return res.status(404).json({ error: 'Pedido não encontrado' });
 
-    const cliente = pedido.cliente_id ? await getById('clientes', pedido.cliente_id) : null;
+    const cliente = pedido.cliente_id ? await getById('clientes', pedido.cliente_id, req.tenant_id) : null;
 
     const produtos = (pedido.itens || []).map((item, i) => ({
       numero_item: String(i + 1),
@@ -95,7 +95,7 @@ router.post('/emitir', authMiddleware, async (req, res) => {
       protocolo: result.status_sefaz,
       url_danfe: result.caminho_danfe,
       url_qrcode: result.qrcode_url,
-    });
+    }, req.tenant_id);
 
     res.json(nfe);
   } catch (err) {
@@ -118,7 +118,7 @@ router.post('/cancelar/:id', authMiddleware, async (req, res) => {
 
     const result = await focus.cancelarNFCe(nfe.ref, motivo);
 
-    const updated = await update('nfe', nfe.id, { status: 'cancelada' });
+    const updated = await update('nfe', nfe.id, { status: 'cancelada' }, req.tenant_id);
     res.json(updated);
   } catch (err) {
     console.error('Erro ao cancelar NFC-e:', err.response?.data || err.message);
@@ -131,7 +131,7 @@ router.post('/cancelar/:id', authMiddleware, async (req, res) => {
 
 router.post('/consultar/:id', authMiddleware, async (req, res) => {
   try {
-    const nfe = await getById('nfe', Number(req.params.id));
+    const nfe = await getById('nfe', Number(req.params.id), req.tenant_id);
     if (!nfe) return res.status(404).json({ error: 'NFe não encontrada' });
 
     const result = await focus.consultarNFCe(nfe.ref);
@@ -143,7 +143,7 @@ router.post('/consultar/:id', authMiddleware, async (req, res) => {
     const updated = await update('nfe', nfe.id, {
       status: statusMap[result.status] || 'pendente',
       protocolo: result.status_sefaz,
-    });
+    }, req.tenant_id);
 
     res.json(updated);
   } catch (err) {

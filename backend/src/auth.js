@@ -40,10 +40,10 @@ export function authMiddleware(req, res, next) {
     if (decoded.tenant_id) {
       req.tenant_id = decoded.tenant_id;
       req.user_id = decoded.user_id;
-      req.user_permissao = decoded.permissao;
     } else {
       req.tenant_id = null;
     }
+    req.user_permissao = decoded.permissao;
     next();
   } catch {
     return res.status(401).json({ error: 'Token inválido ou expirado' });

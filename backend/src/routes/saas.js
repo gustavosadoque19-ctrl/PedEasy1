@@ -6,7 +6,7 @@ import { authMiddleware } from '../auth.js';
 import { tenantGuard } from '../middleware/tenantGuard.js';
 import { recaptchaMiddleware } from '../middleware/recaptcha.js';
 import rateLimit from 'express-rate-limit';
-import { getAll, getById, create, update } from '../store.js';
+import { getAll, getById, create, update, initTenantDb } from '../store.js';
 import * as pagarme from '../pagarme.js';
 
 const router = Router();
@@ -136,6 +136,8 @@ router.post('/signup', signupLimiter, recaptchaMiddleware, async (req, res) => {
     console.error('Erro ao criar usuário:', userErr);
     return res.status(500).json({ error: 'Erro ao criar usuário' });
   }
+
+  initTenantDb(String(tenant.id));
 
   const token = generateToken(user, tenant.id);
   res.status(201).json({
@@ -290,7 +292,7 @@ router.post('/webhooks', async (req, res) => {
           const pagamentos = await getAll('pagamentos', Number(tenantId));
           const pagamento = pagamentos.find((p) => p.transacao_id === txId);
           if (pagamento) {
-            await update('pagamentos', pagamento.id, { status: 'aprovado' });
+            await update('pagamentos', pagamento.id, { status: 'aprovado' }, Number(tenantId));
           }
         }
         break;

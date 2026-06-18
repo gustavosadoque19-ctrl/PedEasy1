@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { supabase } from '../supabaseClient.js';
 import { authMiddleware } from '../auth.js';
 import { tenantGuard } from '../middleware/tenantGuard.js';
+import { initTenantDb } from '../store.js';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
@@ -117,6 +118,8 @@ router.post('/tenants', authMiddleware, tenantGuard, isSuperAdmin, async (req, r
     await supabase.from('tenants').delete().eq('id', tenant.id);
     return res.status(500).json({ error: userErr.message });
   }
+
+  initTenantDb(String(tenant.id));
 
   res.status(201).json({ ...tenant, users: [{ ...user, senha: undefined }] });
 });

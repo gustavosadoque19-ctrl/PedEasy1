@@ -10,9 +10,29 @@ if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
 const SCHEMA_PATH = join(__dirname, '..', 'schema.sql');
 
 const TEST_TENANT_ID = process.env.TEST_TENANT_ID;
+const IS_TEST = process.env.NODE_ENV === 'test';
 
+/**
+ * Abre (ou cria) o banco SQLite do tenant `tenant-<id>.db`.
+ * Em TEST_MODE aceita TEST_TENANT_ID como fallback para testes automatizados.
+ * Em produção, se tenantId for null/undefined, lança erro em vez de criar um
+ * DB "default" compartilhado — isto é a defesa em profundidade caso algo
+ * escape do tenantGuard.
+ */
 function getDb(tenantId) {
-  const tid = tenantId || TEST_TENANT_ID || 'default';
+  let tid;
+  if (tenantId) {
+    tid = tenantId;
+  } else if (IS_TEST && TEST_TENANT_ID) {
+    tid = TEST_TENANT_ID;
+  } else if (IS_TEST) {
+    tid = 'test';
+  } else {
+    throw new Error(
+      `tenant_id ausente — operação rejeitada para evitar acesso a DB compartilhado. ` +
+      `Requisição: método=${this?.method || '?'}`
+    );
+  }
   const dbPath = join(DATA_DIR, `tenant-${tid}.db`);
   const db = new Database(dbPath);
   db.pragma('journal_mode = WAL');

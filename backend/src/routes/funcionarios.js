@@ -2,23 +2,26 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { getAll, getById, create, update, remove } from '../store.js';
 import { authMiddleware } from '../auth.js';
+import { tenantGuard } from '../middleware/tenantGuard.js';
 
 const router = Router();
 
-router.get('/', authMiddleware, async (req, res) => {
+router.use(authMiddleware, tenantGuard);
+
+router.get('/', async (req, res) => {
   const data = await getAll('funcionarios', req.tenant_id);
   const semSenha = data.map(({ senha, ...rest }) => rest);
   res.json(semSenha);
 });
 
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', async (req, res) => {
   const item = await getById('funcionarios', Number(req.params.id), req.tenant_id);
   if (!item) return res.status(404).json({ error: 'Funcionário não encontrado' });
   const { senha, ...rest } = item;
   res.json(rest);
 });
 
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', async (req, res) => {
   const { nome, usuario, senha, cargo, telefone, email, permissao, ativo } = req.body;
   if (!nome || !usuario || !senha) {
     return res.status(400).json({ error: 'Nome, usuário e senha são obrigatórios' });
@@ -46,7 +49,7 @@ router.post('/', authMiddleware, async (req, res) => {
   res.status(201).json(rest);
 });
 
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', async (req, res) => {
   const { senha, ...dados } = req.body;
 
   const existente = await getById('funcionarios', Number(req.params.id), req.tenant_id);
@@ -69,7 +72,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
   res.json(rest);
 });
 
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const ok = await remove('funcionarios', Number(req.params.id), req.tenant_id);
   if (!ok) return res.status(404).json({ error: 'Funcionário não encontrado' });
   res.status(204).send();

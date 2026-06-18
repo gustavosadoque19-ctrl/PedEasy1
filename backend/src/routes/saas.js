@@ -1,16 +1,15 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import { supabase } from '../supabaseClient.js';
-import { authMiddleware } from '../auth.js';
+import { authMiddleware, generateTenantToken } from '../auth.js';
 import { tenantGuard } from '../middleware/tenantGuard.js';
 import { recaptchaMiddleware } from '../middleware/recaptcha.js';
+import { webhookSignature } from '../middleware/webhookSignature.js';
 import rateLimit from 'express-rate-limit';
 import { getAll, getById, create, update, initTenantDb } from '../store.js';
 import * as pagarme from '../pagarme.js';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'pedy-dev-secret-key-change-in-production';
 
 const signupLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -32,14 +31,6 @@ function slugify(text) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 100);
-}
-
-function generateToken(tenantUser, tenantId) {
-  return jwt.sign(
-    { user_id: tenantUser.id, tenant_id: tenantId, permissao: tenantUser.permissao },
-    JWT_SECRET,
-    { expiresIn: '24h' }
-  );
 }
 
 function formatUser(user) {
@@ -139,7 +130,7 @@ router.post('/signup', signupLimiter, recaptchaMiddleware, async (req, res) => {
 
   initTenantDb(String(tenant.id));
 
-  const token = generateToken(user, tenant.id);
+  const token = generateTenantToken(user, tenant.id);
   res.status(201).json({
     token,
     user: formatUser(user),
@@ -182,7 +173,7 @@ router.post('/login', recaptchaMiddleware, async (req, res) => {
     return res.status(404).json({ error: 'Estabelecimento não encontrado' });
   }
 
-  const token = generateToken(user, tenant.id);
+  const token = generateTenantToken(user, tenant.id);
   res.json({
     token,
     user: formatUser(user),
@@ -249,7 +240,7 @@ router.post('/subscriptions', authMiddleware, tenantGuard, async (req, res) => {
   }
 });
 
-router.post('/webhooks', async (req, res) => {
+router.post('/webhooks', webhookSignature, async (req, res) => {
   const event = req.body;
 
   console.log(`[Webhook] Recebido: ${event.type}`);
@@ -299,11 +290,13 @@ router.post('/webhooks', async (req, res) => {
       }
       case 'transaction.refunded': {
         const txId = event.data?.id;
-        if (txId) {
-          const pagamentos = await getAll('pagamentos');
+        const metadata = event.data?.metadata || {};
+        const tenantId = metadata.tenant_id;
+        if (txId && tenantId) {
+          const pagamentos = await getAll('pagamentos', Number(tenantId));
           const pagamento = pagamentos.find((p) => p.transacao_id === txId);
           if (pagamento) {
-            await update('pagamentos', pagamento.id, { status: 'cancelado' });
+            await update('pagamentos', pagamento.id, { status: 'cancelado' }, Number(tenantId));
           }
         }
         break;

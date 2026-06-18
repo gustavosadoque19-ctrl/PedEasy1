@@ -1,32 +1,54 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { getAll, create, update } from '../store.js';
-import { generateToken, authMiddleware } from '../auth.js';
+import { generateTenantToken, authMiddleware } from '../auth.js';
+import { supabase } from '../supabaseClient.js';
 
 const router = Router();
 
+/**
+ * Resolve o tenant_id a partir do slug informado no header `x-tenant-slug`
+ * ou na query `?tenant=`. Retorna null se nenhum slug for fornecido.
+ * Usado para que o login legado (por usuário) emita JWT com tenant_id,
+ * fechando o bypass de isolamento multi-tenant.
+ */
+async function resolveTenantId(req) {
+  const slug = req.headers['x-tenant-slug'] || req.query.tenant;
+  if (!slug) return null;
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle();
+  return tenant ? tenant.id : null;
+}
+
 router.post('/login', async (req, res) => {
+  // Login por email é tratado exclusivamente por /api/saas/login.
+  // O antigo hack que delegava para saasRouter.handle era dead code quebrado
+  // (sempre 500) e foi removido.
   const { usuario, senha, email } = req.body;
 
   if (email) {
-    const { default: saasRouter } = await import('./saas.js');
-    const subReq = { body: { email, senha: senha || req.body.senha } };
-    const subRes = {
-      status(code) { this.statusCode = code; return this; },
-      json(data) { this.body = data; },
-      statusCode: null, body: null,
-    };
-    await saasRouter.handle({ method: 'POST', url: '/login', body: subReq.body }, subRes, () => {});
-    if (subRes.statusCode === 200) {
-      return res.status(200).json(subRes.body);
-    }
+    return res.status(400).json({
+      error: 'Para login por email, use o endpoint /api/saas/login',
+    });
   }
 
   if (!usuario || !senha) {
     return res.status(400).json({ error: 'Usuário e senha obrigatórios' });
   }
 
-  const funcionarios = await getAll('funcionarios');
+  // Login legado exige contexto de tenant (header x-tenant-slug ou ?tenant=),
+  // caso contrário recusa — não emite token sem tenant_id.
+  const tenantId = await resolveTenantId(req);
+  if (!tenantId) {
+    return res.status(401).json({
+      error: 'Tenant não identificado. Envie o slug via header x-tenant-slug ou query ?tenant=.',
+    });
+  }
+
+  const funcionarios = await getAll('funcionarios', tenantId);
   const user = funcionarios.find((f) => f.usuario === usuario);
 
   if (!user) {
@@ -42,7 +64,8 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'Credenciais inválidas' });
   }
 
-  const token = generateToken(user);
+  // Emite token COM tenant_id (mesmo formato do SaaS), fechando o bypass.
+  const token = generateTenantToken(user, tenantId);
   res.json({
     token,
     user: {
@@ -51,6 +74,7 @@ router.post('/login', async (req, res) => {
       usuario: user.usuario,
       cargo: user.cargo,
       permissao: user.permissao,
+      tenant_id: tenantId,
     },
   });
 });
@@ -61,7 +85,15 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'Nome, usuário e senha obrigatórios' });
   }
 
-  const funcionarios = await getAll('funcionarios');
+  // Auto-cadastro legado também exige contexto de tenant.
+  const tenantId = await resolveTenantId(req);
+  if (!tenantId) {
+    return res.status(401).json({
+      error: 'Tenant não identificado. Envie o slug via header x-tenant-slug ou query ?tenant=.',
+    });
+  }
+
+  const funcionarios = await getAll('funcionarios', tenantId);
   if (funcionarios.find((f) => f.usuario === usuario)) {
     return res.status(409).json({ error: 'Usuário já existe' });
   }
@@ -74,7 +106,7 @@ router.post('/register', async (req, res) => {
     email: email || '',
     permissao: 'funcionario',
     ativo: false,
-  });
+  }, tenantId);
 
   res.status(201).json({ message: 'Cadastro realizado! Aguarde aprovação do administrador.' });
 });
@@ -83,7 +115,7 @@ router.get('/pendentes', authMiddleware, async (req, res) => {
   if (req.user.permissao !== 'admin') {
     return res.status(403).json({ error: 'Apenas administradores' });
   }
-  const funcionarios = await getAll('funcionarios');
+  const funcionarios = await getAll('funcionarios', req.tenant_id);
   const pendentes = funcionarios.filter((f) => !f.ativo);
   res.json(pendentes);
 });
@@ -92,7 +124,7 @@ router.put('/aprovar/:id', authMiddleware, async (req, res) => {
   if (req.user.permissao !== 'admin') {
     return res.status(403).json({ error: 'Apenas administradores' });
   }
-  const updated = await update('funcionarios', Number(req.params.id), { ativo: true });
+  const updated = await update('funcionarios', Number(req.params.id), { ativo: true }, req.tenant_id);
   if (!updated) return res.status(404).json({ error: 'Funcionário não encontrado' });
   res.json(updated);
 });

@@ -2,6 +2,9 @@ import jwt from 'jsonwebtoken';
 
 const TEST_MODE = process.env.NODE_ENV === 'test';
 const TEST_TENANT_ID = process.env.TEST_TENANT_ID;
+// Fallback apenas para dev/test local. Em produção o boot em index.js falha
+// antes de chegar aqui se JWT_SECRET não estiver definida — este default NUNCA
+// deve ser usado em produção, pois é público no repositório e permite forjar tokens.
 const JWT_SECRET = process.env.JWT_SECRET || 'pedy-dev-secret-key-change-in-production';
 const JWT_EXPIRES = '24h';
 
@@ -20,6 +23,9 @@ export function generateTenantToken(tenantUser, tenantId) {
     { expiresIn: JWT_EXPIRES }
   );
 }
+
+// Exportado para que saas.js reutilize o mesmo secret (antes duplicado).
+export { JWT_SECRET, JWT_EXPIRES };
 
 export function authMiddleware(req, res, next) {
   if (TEST_MODE) {

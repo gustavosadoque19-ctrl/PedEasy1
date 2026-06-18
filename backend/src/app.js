@@ -44,7 +44,9 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
 const app = express();
 app.use(cors({ origin: CORS_ORIGIN }));
-app.use(express.json());
+// verify captura o corpo bruto (raw body) para verificação HMAC do webhook
+// da Pagar.me. Não afeta o parsing JSON das demais rotas (req.body continua populado).
+app.use(express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }));
 app.use(globalLimiter);
 app.use(requestLogger);
 

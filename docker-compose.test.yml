@@ -1,0 +1,59 @@
+services:
+  backend-1:
+    build:
+      context: .
+      dockerfile: test/Dockerfile.test
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=test
+      - TEST_TENANT_ID=1
+      - JWT_SECRET=dev-secret-tenant-1-only
+      - SUPABASE_URL=https://test.supabase.co
+      - SUPABASE_ANON_KEY=test-anon-key
+      - SUPABASE_SERVICE_ROLE_KEY=test-service-key
+      - CORS_ORIGIN=*
+    volumes:
+      - data-tenant-1:/app/data
+    restart: unless-stopped
+
+  backend-2:
+    build:
+      context: .
+      dockerfile: test/Dockerfile.test
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=test
+      - TEST_TENANT_ID=2
+      - JWT_SECRET=dev-secret-tenant-2-only
+      - SUPABASE_URL=https://test.supabase.co
+      - SUPABASE_ANON_KEY=test-anon-key
+      - SUPABASE_SERVICE_ROLE_KEY=test-service-key
+      - CORS_ORIGIN=*
+    volumes:
+      - data-tenant-2:/app/data
+    restart: unless-stopped
+
+  backend-3:
+    build:
+      context: .
+      dockerfile: test/Dockerfile.test
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=test
+      - TEST_TENANT_ID=3
+      - JWT_SECRET=dev-secret-tenant-3-only
+      - SUPABASE_URL=https://test.supabase.co
+      - SUPABASE_ANON_KEY=test-anon-key
+      - SUPABASE_SERVICE_ROLE_KEY=test-service-key
+      - CORS_ORIGIN=*
+    volumes:
+      - data-tenant-3:/app/data
+    restart: unless-stopped
+
+volumes:
+  data-tenant-1:
+  data-tenant-2:
+  data-tenant-3:

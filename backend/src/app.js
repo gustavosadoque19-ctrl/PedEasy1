@@ -52,7 +52,9 @@ app.use(requestLogger);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/saas', saasRoutes);
-app.use('/api/admin', authMiddleware, tenantGuard, tenantRateLimit, adminRoutes);
+// /api/admin são rotas de plataforma: superadmin não tem tenant_id, então
+// não usam tenantGuard (a proteção real é isSuperAdmin dentro de admin.js).
+app.use('/api/admin', authMiddleware, tenantRateLimit, adminRoutes);
 app.use('/api/nfe', authMiddleware, tenantGuard, tenantRateLimit, nfeRoutes);
 
 function crudRoutes(collection) {
@@ -98,16 +100,16 @@ app.use('/api/produtos', crudRoutes('produtos'));
 
 app.get('/api/cardapio/produtos', async (req, res) => {
   const { slug } = req.query;
-  let tenantId = null;
-  if (slug) {
-    const { data: tenant } = await supabase
-      .from('tenants')
-      .select('id')
-      .eq('slug', slug)
-      .maybeSingle();
-    if (!tenant) return res.status(404).json({ error: 'Estabelecimento não encontrado' });
-    tenantId = tenant.id;
+  if (!slug) {
+    return res.status(400).json({ error: 'Informe o slug do estabelecimento via ?slug=<slug>' });
   }
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (!tenant) return res.status(404).json({ error: 'Estabelecimento não encontrado' });
+  const tenantId = tenant.id;
   const [todosProdutos, todosAdicionais, todasCategorias] = await Promise.all([
     getAll('produtos', tenantId),
     getAll('adicionais', tenantId),
@@ -282,15 +284,16 @@ app.post('/api/cardapio/pedidos', async (req, res) => {
   if (!cliente_nome || !cliente_telefone || !itens?.length) {
     return res.status(400).json({ error: 'Nome, telefone e itens são obrigatórios' });
   }
-  let tenantId = null;
-  if (slug) {
-    const { data: tenant } = await supabase
-      .from('tenants')
-      .select('id')
-      .eq('slug', slug)
-      .maybeSingle();
-    if (tenant) tenantId = tenant.id;
+  if (!slug) {
+    return res.status(400).json({ error: 'Informe o slug do estabelecimento' });
   }
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (!tenant) return res.status(404).json({ error: 'Estabelecimento não encontrado' });
+  const tenantId = tenant.id;
   const valor_itens = itens.reduce((s, i) => s + (i.total || i.quantidade * i.preco_unitario), 0);
   const pedido = await create('pedidos', {
     cliente_nome, cliente_telefone, endereco_entrega, forma_pagamento, observacao,
@@ -303,16 +306,16 @@ app.post('/api/cardapio/pedidos', async (req, res) => {
 
 app.get('/api/config/delivery', async (req, res) => {
   const { slug } = req.query;
-  let tenantId = null;
-  if (slug) {
-    const { data: tenant } = await supabase
-      .from('tenants')
-      .select('id')
-      .eq('slug', slug)
-      .maybeSingle();
-    if (!tenant) return res.status(404).json({ error: 'Estabelecimento não encontrado' });
-    tenantId = tenant.id;
+  if (!slug) {
+    return res.status(400).json({ error: 'Informe o slug do estabelecimento via ?slug=<slug>' });
   }
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (!tenant) return res.status(404).json({ error: 'Estabelecimento não encontrado' });
+  const tenantId = tenant.id;
   const stored = await getAll('config_delivery', tenantId);
   const config = stored[0] || {};
   res.json({
@@ -594,6 +597,11 @@ app.post('/api/produtos/:id/imagem', authMiddleware, tenantGuard, tenantRateLimi
 app.use((err, req, res, next) => {
   if (err.type === 'entity.parse.failed' || (err instanceof SyntaxError && 'body' in err)) {
     return res.status(400).json({ error: 'JSON inválido no corpo da requisição' });
+  }
+  // tenant_id ausente: a defesa em profundidade do sqlite-store.js lançou —
+  // retorna 403 claro em vez de 500 (ex: super-admin em rota tenant-scoped).
+  if (err && err.message && err.message.startsWith('tenant_id ausente')) {
+    return res.status(403).json({ error: 'Operação requer contexto de tenant.' });
   }
   console.error('Erro não tratado:', err);
   res.status(500).json({ error: 'Erro interno do servidor' });

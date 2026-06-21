@@ -32,7 +32,7 @@ export default function PedidosList() {
     (async () => {
       try {
         const res = await getPedidos();
-        if (!cancelled) setPedidos(res.data);
+        if (!cancelled) setPedidos(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         if (!cancelled) console.error(err);
       } finally {
@@ -46,7 +46,7 @@ export default function PedidosList() {
     try {
       const res = await getPedidos();
       if (!mountedRef.current) return;
-      setPedidos(res.data);
+      setPedidos(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       if (!mountedRef.current) return;
       console.error(err);

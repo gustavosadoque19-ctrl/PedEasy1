@@ -36,7 +36,7 @@ export default function NFeList() {
     (async () => {
       try {
         const res = await getNFeList();
-        if (!cancelled) setNfeList(res.data);
+        if (!cancelled) setNfeList(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       if (!cancelled) console.error(err);
       if (!cancelled) snackbar.error('Erro ao carregar NFC-e');
@@ -52,7 +52,7 @@ const load = useCallback(async () => {
   try {
     const res = await getNFeList();
     if (!mountedRef.current) return;
-    setNfeList(res.data);
+    setNfeList(Array.isArray(res.data) ? res.data : []);
   } catch (err) {
     if (!mountedRef.current) return;
     console.error(err);

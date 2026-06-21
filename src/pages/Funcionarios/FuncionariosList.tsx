@@ -37,8 +37,8 @@ export default function FuncionariosList() {
         getFuncionarios(),
         isAdmin ? getPendentes() : Promise.resolve(undefined),
       ]);
-      setFuncionarios(resFunc.data);
-      if (resPend) setPendentes(resPend.data);
+      setFuncionarios(Array.isArray(resFunc.data) ? resFunc.data : []);
+      if (resPend) setPendentes(Array.isArray(resPend.data) ? resPend.data : []);
     } catch {
       setErroCarregar('Erro ao carregar funcionários');
     } finally {

@@ -18,7 +18,7 @@ export default function Carrinhos() {
     (async () => {
       try {
         const res = await getCarrinhosAbandonados();
-        if (!cancelled) setCarrinhos(res.data);
+        if (!cancelled) setCarrinhos(Array.isArray(res.data) ? res.data : []);
       } catch {
         if (!cancelled) setError('Erro ao carregar carrinhos');
       } finally {
@@ -32,7 +32,7 @@ export default function Carrinhos() {
     setLoading(true);
     try {
       const res = await getCarrinhosAbandonados();
-      setCarrinhos(res.data);
+      setCarrinhos(Array.isArray(res.data) ? res.data : []);
     } catch {
       setError('Erro ao carregar carrinhos');
     } finally {

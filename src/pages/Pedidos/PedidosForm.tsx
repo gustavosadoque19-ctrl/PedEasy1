@@ -79,8 +79,8 @@ export default function PedidosForm() {
 
   useEffect(() => {
     let cancelled = false;
-    getProdutos().then((res) => { if (!cancelled) setProdutos(res.data); }).catch(() => {});
-    getClientes().then((res) => { if (!cancelled) setClientes(res.data); }).catch(() => {});
+    getProdutos().then((res) => { if (!cancelled) setProdutos(Array.isArray(res.data) ? res.data : []); }).catch(() => {});
+    getClientes().then((res) => { if (!cancelled) setClientes(Array.isArray(res.data) ? res.data : []); }).catch(() => {});
     if (isEditing) {
       setLoading(true);
       getPedido(Number(id)).then((res) => {

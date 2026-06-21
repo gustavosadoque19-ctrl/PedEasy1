@@ -39,7 +39,7 @@ export const loginSaas = async (data: LoginData) => {
 
 export const getPlanos = async () => {
   const res = await api.get<PlanoInfo[]>('/saas/planos');
-  return res.data;
+  return Array.isArray(res.data) ? res.data : [];
 };
 
 export const getAssinatura = async () => {

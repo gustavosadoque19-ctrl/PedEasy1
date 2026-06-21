@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { supabase } from '../supabaseClient.js';
 import { authMiddleware } from '../auth.js';
-import { tenantGuard } from '../middleware/tenantGuard.js';
 import { initTenantDb } from '../store.js';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
 
+// As rotas /api/admin/* são de plataforma (não de tenant). O superadmin não
+// possui tenant_id, então NÃO usam tenantGuard — proteção fica em isSuperAdmin.
 function isSuperAdmin(req, res, next) {
   if (req.user_permissao !== 'superadmin') {
     return res.status(403).json({ error: 'Acesso restrito a superadministradores' });
@@ -14,7 +15,7 @@ function isSuperAdmin(req, res, next) {
   next();
 }
 
-router.get('/tenants', authMiddleware, tenantGuard, isSuperAdmin, async (req, res) => {
+router.get('/tenants', authMiddleware, isSuperAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from('tenants')
     .select('*')
@@ -45,7 +46,7 @@ router.get('/tenants', authMiddleware, tenantGuard, isSuperAdmin, async (req, re
   res.json(enriched);
 });
 
-router.get('/tenants/:id', authMiddleware, tenantGuard, isSuperAdmin, async (req, res) => {
+router.get('/tenants/:id', authMiddleware, isSuperAdmin, async (req, res) => {
   const { data: tenant } = await supabase.from('tenants').select('*').eq('id', req.params.id).maybeSingle();
   if (!tenant) return res.status(404).json({ error: 'Tenant não encontrado' });
 
@@ -58,7 +59,7 @@ router.get('/tenants/:id', authMiddleware, tenantGuard, isSuperAdmin, async (req
   res.json({ ...tenant, users: users || [], password: undefined });
 });
 
-router.put('/tenants/:id', authMiddleware, tenantGuard, isSuperAdmin, async (req, res) => {
+router.put('/tenants/:id', authMiddleware, isSuperAdmin, async (req, res) => {
   const allowed = ['plano', 'status', 'pagarme_subscription_id', 'pagarme_customer_id'];
   const updates = {};
   for (const key of allowed) {
@@ -76,7 +77,7 @@ router.put('/tenants/:id', authMiddleware, tenantGuard, isSuperAdmin, async (req
   res.json(data);
 });
 
-router.post('/tenants', authMiddleware, tenantGuard, isSuperAdmin, async (req, res) => {
+router.post('/tenants', authMiddleware, isSuperAdmin, async (req, res) => {
   const { nome, email, senha, plano = 'free', status = 'trial' } = req.body;
   if (!nome || !email || !senha) {
     return res.status(400).json({ error: 'nome, email e senha são obrigatórios' });
@@ -124,7 +125,7 @@ router.post('/tenants', authMiddleware, tenantGuard, isSuperAdmin, async (req, r
   res.status(201).json({ ...tenant, users: [{ ...user, senha: undefined }] });
 });
 
-router.get('/metricas', authMiddleware, tenantGuard, isSuperAdmin, async (req, res) => {
+router.get('/metricas', authMiddleware, isSuperAdmin, async (req, res) => {
   const { data: allTenants } = await supabase.from('tenants').select('*');
   const all = allTenants || [];
   const ativos = all.filter((t) => t.status === 'active');

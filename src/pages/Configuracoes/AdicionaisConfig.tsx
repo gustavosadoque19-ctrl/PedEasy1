@@ -33,8 +33,8 @@ export default function AdicionaisConfig() {
   const load = async () => {
     try {
       const [catRes, adicRes] = await Promise.all([getCategoriasAdicionais(), getAdicionais()]);
-      setCategorias(catRes.data);
-      setAdicionais(adicRes.data);
+      setCategorias(Array.isArray(catRes.data) ? catRes.data : []);
+      setAdicionais(Array.isArray(adicRes.data) ? adicRes.data : []);
     } catch { /* ignore */ }
   };
 
@@ -44,8 +44,8 @@ export default function AdicionaisConfig() {
       setLoading(true);
       try {
         const [catRes, adicRes] = await Promise.all([getCategoriasAdicionais(), getAdicionais()]);
-        if (!cancelled) setCategorias(catRes.data);
-        if (!cancelled) setAdicionais(adicRes.data);
+        if (!cancelled) setCategorias(Array.isArray(catRes.data) ? catRes.data : []);
+        if (!cancelled) setAdicionais(Array.isArray(adicRes.data) ? adicRes.data : []);
       } catch { /* ignore */ }
       if (!cancelled) setLoading(false);
     })();

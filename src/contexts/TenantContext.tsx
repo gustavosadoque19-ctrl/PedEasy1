@@ -41,7 +41,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       } else {
         localStorage.removeItem('tenant');
       }
-      setPlanos(planosData);
+      setPlanos(Array.isArray(planosData) ? planosData : []);
     } catch {
       setTenant(null);
       localStorage.removeItem('tenant');
@@ -55,7 +55,8 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
   }, [load]);
 
   const plano = tenant?.plano || 'free';
-  const limites = planos.find((p) => p.slug === plano)?.limites || null;
+  const planosList = Array.isArray(planos) ? planos : [];
+  const limites = planosList.find((p) => p.slug === plano)?.limites || null;
 
   const isTrial = tenant?.status === 'trial';
   const trialDaysLeft = tenant?.trial_ends_at

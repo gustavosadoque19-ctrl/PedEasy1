@@ -32,7 +32,7 @@ export default function ClientesList() {
     (async () => {
       try {
         const res = await getClientes();
-        if (!cancelled) setClientes(res.data);
+        if (!cancelled) setClientes(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         if (!cancelled) console.error(err);
       } finally {
@@ -46,7 +46,7 @@ export default function ClientesList() {
     try {
       const res = await getClientes();
       if (!mountedRef.current) return;
-      setClientes(res.data);
+      setClientes(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       if (!mountedRef.current) return;
       console.error(err);

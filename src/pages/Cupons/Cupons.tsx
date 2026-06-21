@@ -25,7 +25,7 @@ export default function Cupons() {
     (async () => {
       try {
         const res = await getCupons();
-        if (!cancelled) setCupons(res.data);
+        if (!cancelled) setCupons(Array.isArray(res.data) ? res.data : []);
       } catch {
         if (!cancelled) setError('Erro ao carregar cupons');
       } finally {
@@ -39,7 +39,7 @@ export default function Cupons() {
     setLoading(true);
     try {
       const res = await getCupons();
-      setCupons(res.data);
+      setCupons(Array.isArray(res.data) ? res.data : []);
     } catch {
       setError('Erro ao carregar cupons');
     } finally {

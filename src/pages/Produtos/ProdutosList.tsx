@@ -34,7 +34,7 @@ export default function ProdutosList() {
     (async () => {
       try {
         const res = await getProdutos();
-        if (!cancelled) setProdutos(res.data);
+        if (!cancelled) setProdutos(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         if (!cancelled) console.error(err);
       } finally {
@@ -49,7 +49,7 @@ export default function ProdutosList() {
     try {
       const res = await getProdutos();
       if (!mountedRef.current) return;
-      setProdutos(res.data);
+      setProdutos(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       if (!mountedRef.current) return;
       console.error(err);

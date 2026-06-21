@@ -1,14 +1,12 @@
 import { supabase } from '../supabaseClient.js';
 
 export async function tenantGuard(req, res, next) {
-  // O super-admin da plataforma (permissao === 'superadmin') opera sem
-  // tenant_id e acessa /api/admin/*. É o único caso legítimo de tenant nulo.
-  // Qualquer outra requisição sem tenant_id indica token legado/forjado e é
-  // recusada — isto fecha o bypass que antes caía num DB compartilhado.
+  // Qualquer requisição a rotas de dados de tenant precisa de tenant_id no token.
+  // O super-admin da plataforma NÃO passa por aqui — as rotas /api/admin/* não
+  // usam este middleware (protegidas por isSuperAdmin em admin.js).
+  // Sem tenant_id o acesso é recusado, fechando o bypass que antes caía num
+  // DB "default" compartilhado.
   if (!req.tenant_id) {
-    if (req.user_permissao === 'superadmin') {
-      return next();
-    }
     return res.status(403).json({ error: 'Tenant não identificado no token.' });
   }
   const { data: tenant, error } = await supabase

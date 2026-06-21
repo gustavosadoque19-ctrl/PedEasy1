@@ -129,9 +129,9 @@ export default function Mesas() {
         getPedidos(), getProdutos(), getClientes(), getAdicionais(), getCategoriasAdicionais(),
       ]);
       if (!mountedRef.current) return;
-      setPedidos(pedRes.data);
-      setProdutos(prodRes.data.filter((p: Produto) => p.ativo !== false));
-      setClientes(cliRes.data);
+      setPedidos(Array.isArray(pedRes.data) ? pedRes.data : []);
+      setProdutos((Array.isArray(prodRes.data) ? prodRes.data : []).filter((p: Produto) => p.ativo !== false));
+      setClientes(Array.isArray(cliRes.data) ? cliRes.data : []);
       const catAtivas = (catAdicRes.data || []).filter((c: CategoriaAdicional) => c.ativo !== false);
       const todosAdicionais = (adicRes.data || []).filter((a: Adicional) => a.ativo !== false);
       const adicionaisComCat = todosAdicionais.map((a: Adicional) => {

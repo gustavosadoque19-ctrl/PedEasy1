@@ -32,8 +32,8 @@ export default function EstoqueList() {
     (async () => {
       try {
         const [prodRes, movRes] = await Promise.all([getProdutos(), getMovimentos()]);
-        if (!cancelled) setProdutos(prodRes.data);
-        if (!cancelled) setMovimentos(movRes.data);
+        if (!cancelled) setProdutos(Array.isArray(prodRes.data) ? prodRes.data : []);
+        if (!cancelled) setMovimentos(Array.isArray(movRes.data) ? movRes.data : []);
       } catch (err) {
         if (!cancelled) console.error(err);
       } finally {

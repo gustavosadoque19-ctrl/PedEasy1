@@ -60,7 +60,7 @@ export default function Dashboard() {
     (async () => {
       try {
         const res = await getPedidos();
-        if (!cancelled) setPedidos(res.data);
+        if (!cancelled) setPedidos(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         if (!cancelled) console.error(err);
       } finally {
@@ -68,7 +68,7 @@ export default function Dashboard() {
       }
     })();
     if (isAdmin) {
-      getPendentes().then((res) => { if (!cancelled) setPendentesCount(res.data.length); }).catch(() => {});
+      getPendentes().then((res) => { if (!cancelled) setPendentesCount(Array.isArray(res.data) ? res.data.length : 0); }).catch(() => {});
     }
     return () => { cancelled = true; };
   }, [isAdmin]);
@@ -87,7 +87,7 @@ export default function Dashboard() {
         notificarCliente(pedido.id!, pedido.cliente_telefone).catch(() => {});
       }
       const res = await getPedidos();
-      setPedidos(res.data);
+      setPedidos(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
     }
@@ -98,7 +98,7 @@ export default function Dashboard() {
     if (val > 0) {
       localStorage.setItem('dashboard_tempo_limite', String(val));
       setOpenConfig(false);
-      getPedidos().then((res) => setPedidos(res.data)).catch(console.error);
+      getPedidos().then((res) => setPedidos(Array.isArray(res.data) ? res.data : [])).catch(console.error);
     }
   };
 

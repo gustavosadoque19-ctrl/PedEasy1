@@ -32,7 +32,7 @@ export default function Integracoes() {
     (async () => {
       try {
         const res = await getIntegracoes();
-        if (!cancelled) setIntegracoes(res.data);
+        if (!cancelled) setIntegracoes(Array.isArray(res.data) ? res.data : []);
       } catch {
         if (!cancelled) setError('Erro ao carregar integrações');
       } finally {
@@ -46,7 +46,7 @@ export default function Integracoes() {
     setLoading(true);
     try {
       const res = await getIntegracoes();
-      setIntegracoes(res.data);
+      setIntegracoes(Array.isArray(res.data) ? res.data : []);
     } catch {
       setError('Erro ao carregar integrações');
     } finally {

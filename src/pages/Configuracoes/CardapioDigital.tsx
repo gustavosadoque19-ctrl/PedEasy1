@@ -61,7 +61,7 @@ export default function CardapioDigital() {
           getProdutos(),
           getDeliveryConfig(),
         ]);
-        if (!cancelled) setProdutos(prodRes.data.filter((p: Produto) => p.ativo !== false));
+        if (!cancelled) setProdutos((Array.isArray(prodRes.data) ? prodRes.data : []).filter((p: Produto) => p.ativo !== false));
         if (!cancelled) setDeliveryConfig({
           taxa_entrega: cfgRes.data.taxa_entrega ?? 0,
           tempo_estimado: cfgRes.data.tempo_estimado || '30-50 min',

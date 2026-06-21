@@ -53,7 +53,7 @@ export default function ProdutosForm() {
   });
 
   useEffect(() => {
-    getAdicionais().then((res) => setAdicionais(res.data.filter((a: Adicional) => a.ativo))).catch(() => {});
+    getAdicionais().then((res) => setAdicionais((Array.isArray(res.data) ? res.data : []).filter((a: Adicional) => a.ativo))).catch(() => {});
   }, []);
 
   useEffect(() => {

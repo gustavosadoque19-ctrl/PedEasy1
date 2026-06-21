@@ -172,8 +172,8 @@ export default function CardapioPage() {
           getAdicionais(),
         ]);
         if (!cancelled) {
-          const todosAdicionais = adicRes.data || [];
-          const produtosComAdicionais = (prodRes.data as Produto[]).map((p) => ({
+          const todosAdicionais = Array.isArray(adicRes.data) ? adicRes.data : [];
+          const produtosComAdicionais = (Array.isArray(prodRes.data) ? (prodRes.data as Produto[]) : []).map((p) => ({
             ...p,
             adicionais_disponiveis: (p.adicionais_ids || [])
               .map((id) => todosAdicionais.find((a) => a.id === id))

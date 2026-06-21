@@ -102,7 +102,7 @@ router.post('/emitir', authMiddleware, async (req, res) => {
     console.error('Erro ao emitir NFC-e:', err.response?.data || err.message);
     res.status(500).json({
       error: 'Erro ao emitir NFC-e',
-      detalhe: err.response?.data?.erros || err.response?.data?.mensagem || err.message,
+      detalhe: err.response?.data?.erros || err.response?.data?.mensagem || null,
     });
   }
 });
@@ -112,7 +112,7 @@ router.post('/cancelar/:id', authMiddleware, async (req, res) => {
     const { motivo } = req.body;
     if (!motivo) return res.status(400).json({ error: 'Motivo do cancelamento é obrigatório' });
 
-    const nfe = await getById('nfe', Number(req.params.id));
+    const nfe = await getById('nfe', Number(req.params.id), req.tenant_id);
     if (!nfe) return res.status(404).json({ error: 'NFe não encontrada' });
     if (nfe.status !== 'autorizada') return res.status(400).json({ error: 'NFe não está autorizada' });
 
@@ -124,7 +124,7 @@ router.post('/cancelar/:id', authMiddleware, async (req, res) => {
     console.error('Erro ao cancelar NFC-e:', err.response?.data || err.message);
     res.status(500).json({
       error: 'Erro ao cancelar NFC-e',
-      detalhe: err.response?.data?.erros || err.response?.data?.mensagem || err.message,
+      detalhe: err.response?.data?.erros || err.response?.data?.mensagem || null,
     });
   }
 });

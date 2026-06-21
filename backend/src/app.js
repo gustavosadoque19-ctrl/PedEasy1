@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -41,9 +42,17 @@ const upload = multer({
 });
 
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+// Suporta múltiplas origens separadas por vírgula
+const corsOrigins = CORS_ORIGIN.split(',').map(s => s.trim());
 
 const app = express();
-app.use(cors({ origin: CORS_ORIGIN }));
+app.use(helmet());
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || corsOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
+}));
 // verify captura o corpo bruto (raw body) para verificação HMAC do webhook
 // da Pagar.me. Não afeta o parsing JSON das demais rotas (req.body continua populado).
 app.use(express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }));
@@ -248,7 +257,8 @@ app.get('/api/caixa/aberto', authMiddleware, tenantGuard, tenantRateLimit, async
 });
 
 app.post('/api/caixa/abrir', authMiddleware, tenantGuard, tenantRateLimit, async (req, res) => {
-  const item = await create('caixa', { ...req.body, status: 'aberto', movimentos: [] }, req.tenant_id);
+  const safeData = { saldo_inicial: req.body.saldo_inicial, observacao: req.body.observacao };
+  const item = await create('caixa', { ...safeData, status: 'aberto', movimentos: [] }, req.tenant_id);
   res.status(201).json(item);
 });
 
@@ -268,7 +278,7 @@ app.post('/api/caixa/fechar/:id', authMiddleware, tenantGuard, tenantRateLimit, 
 app.post('/api/caixa/movimento', authMiddleware, tenantGuard, tenantRateLimit, async (req, res) => {
   const caixa = await getById('caixa', Number(req.body.caixa_id), req.tenant_id);
   if (!caixa) return res.status(404).json({ error: 'Caixa não encontrado' });
-  const mov = { ...req.body, createdAt: new Date().toISOString() };
+  const mov = { tipo: req.body.tipo, valor: req.body.valor, descricao: req.body.descricao, createdAt: new Date().toISOString() };
   const updated = await update('caixa', caixa.id, {
     movimentos: [...(caixa.movimentos || []), mov],
   }, req.tenant_id);
@@ -492,7 +502,7 @@ app.post('/api/pagamentos/pix', authMiddleware, tenantGuard, tenantRateLimit, as
     res.status(201).json(item);
   } catch (err) {
     console.error('Erro Pagar.me PIX:', err);
-    res.status(500).json({ error: err.message || 'Erro ao criar cobrança PIX' });
+    res.status(500).json({ error: 'Erro ao criar cobrança PIX' });
   }
 });
 
@@ -550,7 +560,7 @@ app.post('/api/pagamentos/cartao', authMiddleware, tenantGuard, tenantRateLimit,
     res.status(201).json(item);
   } catch (err) {
     console.error('Erro Pagar.me Cartão:', err);
-    res.status(500).json({ error: err.message || 'Erro ao processar pagamento com cartão' });
+    res.status(500).json({ error: 'Erro ao processar pagamento com cartão' });
   }
 });
 
@@ -561,7 +571,7 @@ app.get('/api/pagamentos/pix/status/:transacaoId', authMiddleware, tenantGuard, 
     if (!pagamento) return res.status(404).json({ error: 'Pagamento não encontrado' });
     res.json({ status: pagamento.status, qr_code: pagamento.qr_code, cobranca: pagamento.cobranca });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Erro ao consultar pagamento' });
   }
 });
 

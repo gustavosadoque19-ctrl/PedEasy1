@@ -23,14 +23,18 @@ function MobileLogin() {
     setError('');
 
     const recaptchaToken = captchaRef.current?.getToken();
+    if (!recaptchaToken) {
+      setError('Confirme que você não é um robô');
+      return;
+    }
 
     setLoading(true);
     localStorage.setItem('server_url', serverUrl);
     try {
       if (emailOrUser.includes('@')) {
-        await loginEmail(emailOrUser, senha, recaptchaToken ?? undefined);
+        await loginEmail(emailOrUser, senha, recaptchaToken);
       } else {
-        await login(emailOrUser, senha, recaptchaToken ?? undefined);
+        await login(emailOrUser, senha, recaptchaToken);
       }
       navigate('/app');
     } catch (err: unknown) {
@@ -97,14 +101,18 @@ function DesktopLogin() {
     setError('');
 
     const recaptchaToken = captchaRef.current?.getToken();
+    if (!recaptchaToken) {
+      setError('Confirme que você não é um robô');
+      return;
+    }
 
     setLoading(true);
     localStorage.setItem('server_url', serverUrl);
     try {
       if (emailOrUser.includes('@')) {
-        await loginEmail(emailOrUser, senha, recaptchaToken ?? undefined);
+        await loginEmail(emailOrUser, senha, recaptchaToken);
       } else {
-        await login(emailOrUser, senha, recaptchaToken ?? undefined);
+        await login(emailOrUser, senha, recaptchaToken);
       }
       navigate('/app');
     } catch (err: unknown) {

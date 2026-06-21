@@ -67,8 +67,11 @@ export const uploadProdutoImagem = async (id: number, file: File) => {
 
 export const getImagemUrl = (filename?: string) => {
   if (!filename) return '';
+  // Valida que o filename não contém path traversal
+  if (filename.includes('..') || filename.includes('/')) return '';
   const apiUrl = import.meta.env.VITE_API_URL || '';
-  const baseUrl = apiUrl.replace(/\/api\/?$/, '') || (window.location.hostname === 'localhost' && localStorage.getItem('server_url')?.replace('/api', '')) || '';
+  const baseUrl = apiUrl.replace(/\/api\/?$/, '') || '';
+  // Só permite URLs relativas (mesmo origin) para segurança
   return `${baseUrl}/uploads/${filename}`;
 };
 

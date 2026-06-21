@@ -1,8 +1,19 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
+import rateLimit from 'express-rate-limit';
 import { getAll, create, update } from '../store.js';
 import { generateTenantToken, authMiddleware } from '../auth.js';
+import { tenantGuard } from '../middleware/tenantGuard.js';
+import { recaptchaMiddleware } from '../middleware/recaptcha.js';
 import { supabase } from '../supabaseClient.js';
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+});
 
 const router = Router();
 
@@ -23,7 +34,7 @@ async function resolveTenantId(req) {
   return tenant ? tenant.id : null;
 }
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, recaptchaMiddleware, async (req, res) => {
   // Login por email é tratado exclusivamente por /api/saas/login.
   // O antigo hack que delegava para saasRouter.handle era dead code quebrado
   // (sempre 500) e foi removido.
@@ -79,7 +90,7 @@ router.post('/login', async (req, res) => {
   });
 });
 
-router.post('/register', async (req, res) => {
+router.post('/register', loginLimiter, recaptchaMiddleware, async (req, res) => {
   const { nome, usuario, senha, cargo, telefone, email } = req.body;
   if (!nome || !usuario || !senha) {
     return res.status(400).json({ error: 'Nome, usuário e senha obrigatórios' });
@@ -111,7 +122,7 @@ router.post('/register', async (req, res) => {
   res.status(201).json({ message: 'Cadastro realizado! Aguarde aprovação do administrador.' });
 });
 
-router.get('/pendentes', authMiddleware, async (req, res) => {
+router.get('/pendentes', authMiddleware, tenantGuard, async (req, res) => {
   if (req.user.permissao !== 'admin') {
     return res.status(403).json({ error: 'Apenas administradores' });
   }
@@ -120,7 +131,7 @@ router.get('/pendentes', authMiddleware, async (req, res) => {
   res.json(pendentes);
 });
 
-router.put('/aprovar/:id', authMiddleware, async (req, res) => {
+router.put('/aprovar/:id', authMiddleware, tenantGuard, async (req, res) => {
   if (req.user.permissao !== 'admin') {
     return res.status(403).json({ error: 'Apenas administradores' });
   }

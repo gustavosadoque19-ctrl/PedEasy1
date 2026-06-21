@@ -25,8 +25,8 @@ export default function Signup() {
       setError('Senhas não conferem');
       return;
     }
-    if (senha.length < 6) {
-      setError('Senha deve ter no mínimo 6 caracteres');
+    if (senha.length < 8 || !/[A-Z]/.test(senha) || !/[0-9]/.test(senha)) {
+      setError('Senha deve ter no mínimo 8 caracteres, com pelo menos 1 letra maiúscula e 1 número');
       return;
     }
 

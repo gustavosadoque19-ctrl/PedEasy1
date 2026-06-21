@@ -1,11 +1,13 @@
 import jwt from 'jsonwebtoken';
 
-const TEST_MODE = process.env.NODE_ENV === 'test';
+const AUTH_BYPASS = process.env.NODE_ENV === 'test' && process.env.AUTH_BYPASS === 'true';
 const TEST_TENANT_ID = process.env.TEST_TENANT_ID;
-// Fallback apenas para dev/test local. Em produção o boot em index.js falha
-// antes de chegar aqui se JWT_SECRET não estiver definida — este default NUNCA
-// deve ser usado em produção, pois é público no repositório e permite forjar tokens.
-const JWT_SECRET = process.env.JWT_SECRET || 'pedy-dev-secret-key-change-in-production';
+// JWT_SECRET é obrigatório em todos os ambientes. Sem ele, qualquer um pode
+// forjar tokens. O boot em index.js falha se não estiver definido.
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET não configurada. Defina JWT_SECRET no ambiente.');
+}
 const JWT_EXPIRES = '24h';
 
 export function generateToken(user) {
@@ -57,7 +59,7 @@ export function authMiddleware(req, res, next) {
 }
 
 export function optionalAuth(req, res, next) {
-  if (TEST_MODE) {
+  if (AUTH_BYPASS) {
     req.user = { id: 1, user_id: 1, tenant_id: TEST_TENANT_ID, permissao: 'admin' };
     req.tenant_id = TEST_TENANT_ID;
     req.user_id = 1;

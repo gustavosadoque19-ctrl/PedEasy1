@@ -19,7 +19,9 @@ async function seed() {
     }
   }
 
-  const senhaHash = bcrypt.hashSync('admin', 10);
+  // Gera senha aleatória de 12 caracteres
+  const seedPass = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+  const senhaHash = bcrypt.hashSync(seedPass, 10);
 
   console.log('📦 Inserindo dados iniciais...');
 
@@ -39,7 +41,7 @@ async function seed() {
     .insert({ tenant_id: tenant.id, nome: 'Administrador', email: 'admin@pedy.com', senha: senhaHash, cargo: 'Gerente', permissao: 'admin', ativo: 1 });
 
   if (e2) { console.error('Erro ao criar usuário:', e2); return; }
-  console.log(`  ✅ Usuário admin criado (admin@pedy.com / admin)`);
+  console.log(`  ✅ Usuário admin criado (admin@pedy.com / ${seedPass})`);
 
   initTenantDb(TENANT_ID);
 
@@ -58,7 +60,7 @@ async function seed() {
   await create('clientes', { nome: 'Carlos Oliveira', telefone: '(11) 99999-0003', email: 'carlos@email.com' }, TENANT_ID);
 
   console.log('✅ Dados iniciais inseridos!');
-  console.log('   Email: admin@pedy.com / Senha: admin');
+  console.log('   Email: admin@pedy.com / Senha: ' + seedPass);
 }
 
 seed().catch((err) => {

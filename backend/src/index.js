@@ -5,18 +5,16 @@ import { logger } from './logger.js';
 
 const PORT = process.env.PORT || 3000;
 
-// Validação de variáveis obrigatórias em produção — falha o boot se faltar
-// qualquer segredo. Em dev/test o fallback de auth.js ainda permite rodar.
-const IS_PROD = process.env.NODE_ENV === 'production';
-if (IS_PROD) {
-  const REQUIRED_SECRETS = ['JWT_SECRET', 'PAGARME_SECRET_KEY', 'PAGARME_WEBHOOK_SECRET'];
-  const missing = REQUIRED_SECRETS.filter((name) => !process.env[name]);
-  if (missing.length > 0) {
-    logger.error(`Variáveis de ambiente obrigatórias ausentes em produção: ${missing.join(', ')}`);
-    process.exit(1);
-  }
-} else if (!process.env.JWT_SECRET) {
-  logger.warn('JWT_SECRET não configurada — usando valor padrão (apenas para dev/test, NUNCA em produção)');
+// Validação de variáveis obrigatórias em todos os ambientes — o fallback
+// hardcoded em auth.js foi removido, então sem JWT_SECRET o boot falha.
+const REQUIRED_SECRETS = ['JWT_SECRET'];
+if (process.env.NODE_ENV === 'production') {
+  REQUIRED_SECRETS.push('PAGARME_SECRET_KEY', 'PAGARME_WEBHOOK_SECRET');
+}
+const missing = REQUIRED_SECRETS.filter((name) => !process.env[name]);
+if (missing.length > 0) {
+  logger.error(`Variáveis de ambiente obrigatórias ausentes: ${missing.join(', ')}`);
+  process.exit(1);
 }
 
 const server = app.listen(PORT, () => {

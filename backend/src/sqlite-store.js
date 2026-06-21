@@ -22,7 +22,11 @@ const IS_TEST = process.env.NODE_ENV === 'test';
 function getDb(tenantId) {
   let tid;
   if (tenantId) {
-    tid = tenantId;
+    tid = String(tenantId);
+    // Valida que tenant_id é um UUID ou inteiro positivo para prevenir path traversal
+    if (!/^\d+$/.test(tid) && !/^[0-9a-f-]+$/i.test(tid)) {
+      throw new Error(`tenant_id inválido: deve ser um número ou UUID`);
+    }
   } else if (IS_TEST && TEST_TENANT_ID) {
     tid = TEST_TENANT_ID;
   } else if (IS_TEST) {

@@ -19,6 +19,14 @@ const signupLimiter = rateLimit({
   message: { error: 'Muitas tentativas de cadastro. Tente novamente em 15 minutos.' },
 });
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+});
+
 const PLAN_IDS = {
   pro: process.env.PAGARME_PLAN_PRO,
   enterprise: process.env.PAGARME_PLAN_ENTERPRISE,
@@ -64,8 +72,8 @@ router.post('/signup', signupLimiter, recaptchaMiddleware, async (req, res) => {
   if (!tenant_name || !nome || !email || !senha) {
     return res.status(400).json({ error: 'tenant_name, nome, email e senha são obrigatórios' });
   }
-  if (senha.length < 6) {
-    return res.status(400).json({ error: 'Senha deve ter no mínimo 6 caracteres' });
+  if (senha.length < 8 || !/[A-Z]/.test(senha) || !/[0-9]/.test(senha)) {
+    return res.status(400).json({ error: 'Senha deve ter no mínimo 8 caracteres, com pelo menos 1 letra maiúscula e 1 número' });
   }
 
   const { data: existing } = await supabase
@@ -138,7 +146,7 @@ router.post('/signup', signupLimiter, recaptchaMiddleware, async (req, res) => {
   });
 });
 
-router.post('/login', recaptchaMiddleware, async (req, res) => {
+router.post('/login', loginLimiter, recaptchaMiddleware, async (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) {
     return res.status(400).json({ error: 'Email e senha obrigatórios' });
@@ -309,7 +317,7 @@ router.post('/webhooks', webhookSignature, async (req, res) => {
   res.json({ received: true });
 });
 
-router.get('/assinatura', authMiddleware, async (req, res) => {
+router.get('/assinatura', authMiddleware, tenantGuard, async (req, res) => {
   if (!req.tenant_id) {
     return res.json(null);
   }
@@ -342,7 +350,7 @@ router.delete('/subscriptions', authMiddleware, tenantGuard, async (req, res) =>
   }
 });
 
-router.get('/onboarding', authMiddleware, async (req, res) => {
+router.get('/onboarding', authMiddleware, tenantGuard, async (req, res) => {
   if (!req.tenant_id) {
     return res.json({ completed: false, step: 0, data: null });
   }

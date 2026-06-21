@@ -20,7 +20,7 @@ services:
       - "3000:3000"
     environment:
       - PORT=3000
-      - JWT_SECRET=${JWT_SECRET:-pedy-dev-secret-key-change-in-production}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET é obrigatório}
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost}
       - FOCUS_TOKEN=${FOCUS_TOKEN:-}
       - FOCUS_CIDADE=${FOCUS_CIDADE:-Sao Paulo}

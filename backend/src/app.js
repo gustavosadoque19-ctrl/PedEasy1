@@ -60,6 +60,8 @@ app.use(express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }));
 app.use(globalLimiter);
 app.use(requestLogger);
 
+app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/saas', saasRoutes);
 // /api/admin são rotas de plataforma: superadmin não tem tenant_id, então

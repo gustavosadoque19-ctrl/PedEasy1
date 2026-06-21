@@ -45,8 +45,6 @@ async function seed() {
 
   initTenantDb(TENANT_ID);
 
-  await create('tenant_config', { tenant_id: TENANT_ID, nome: 'Estabelecimento Padrão', slug: 'estabelecimento-padrao', plano: 'pro', status: 'active' }, TENANT_ID);
-
   await create('funcionarios', { nome: 'Administrador', usuario: 'admin', senha: senhaHash, cargo: 'Gerente', telefone: '', email: 'admin@pedy.com', permissao: 'admin', ativo: 1 }, TENANT_ID);
 
   await create('produtos', { nome: 'Pizza Margherita', descricao: 'Molho, mussarela, manjericão', preco_venda: 35.90, preco_custo: 15, categoria: 'Pizzas', unidade: 'un', estoque_atual: 10, estoque_minimo: 3, ativo: 1 }, TENANT_ID);

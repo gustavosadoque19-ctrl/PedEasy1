@@ -1,166 +1,97 @@
-import Database from 'better-sqlite3';
-import { existsSync, mkdirSync, readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = join(__dirname, '..', 'data');
-if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
-
-const SCHEMA_PATH = join(__dirname, '..', 'schema.sql');
-
-const TEST_TENANT_ID = process.env.TEST_TENANT_ID;
-const IS_TEST = process.env.NODE_ENV === 'test';
-
-/**
- * Abre (ou cria) o banco SQLite do tenant `tenant-<id>.db`.
- * Em TEST_MODE aceita TEST_TENANT_ID como fallback para testes automatizados.
- * Em produção, se tenantId for null/undefined, lança erro em vez de criar um
- * DB "default" compartilhado — isto é a defesa em profundidade caso algo
- * escape do tenantGuard.
- */
-function getDb(tenantId) {
-  let tid;
-  if (tenantId) {
-    tid = String(tenantId);
-    // Valida que tenant_id é um UUID ou inteiro positivo para prevenir path traversal
-    if (!/^\d+$/.test(tid) && !/^[0-9a-f-]+$/i.test(tid)) {
-      throw new Error(`tenant_id inválido: deve ser um número ou UUID`);
-    }
-  } else if (IS_TEST && TEST_TENANT_ID) {
-    tid = TEST_TENANT_ID;
-  } else if (IS_TEST) {
-    tid = 'test';
-  } else {
-    throw new Error(
-      `tenant_id ausente — operação rejeitada para evitar acesso a DB compartilhado. ` +
-      `Requisição: método=${this?.method || '?'}`
-    );
-  }
-  const dbPath = join(DATA_DIR, `tenant-${tid}.db`);
-  const db = new Database(dbPath);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-  return db;
-}
-
-export function initTenantDb(tenantId) {
-  const db = getDb(tenantId);
-  if (existsSync(SCHEMA_PATH)) {
-    const schema = readFileSync(SCHEMA_PATH, 'utf-8');
-    db.exec(schema);
-  }
-  db.close();
-}
-
-const JSON_COLS = new Set([
-  'itens', 'movimentos', 'adicionais_ids', 'horarios', 'config', 'dados',
-]);
+import { supabase } from './global-store.js';
 
 const TABLE_MAP = {
   'categorias-adicionais': 'categorias_adicionais',
-  'fidelidade_clientes': 'fidelidade_clientes',
-  'fidelidade_config': 'fidelidade_config',
-  'config_delivery': 'config_delivery',
 };
 
 function tableName(collection) {
   return TABLE_MAP[collection] || collection;
 }
 
-function colNames(db, table) {
-  return db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name);
-}
-
-function filterCols(db, table, data) {
-  const valid = colNames(db, table);
-  const out = {};
-  for (const key of Object.keys(data)) {
-    if (valid.includes(key)) out[key] = data[key];
-  }
-  return out;
-}
-
-function parseRow(row) {
+function mergeData(row) {
   if (!row) return null;
-  const parsed = { ...row };
-  for (const col of Object.keys(parsed)) {
-    if (JSON_COLS.has(col) && typeof parsed[col] === 'string') {
-      try { parsed[col] = JSON.parse(parsed[col]); } catch {}
-    }
-  }
-  return parsed;
-}
-
-function parseRows(rows) {
-  return rows.map(parseRow);
+  const { data, created_at, updated_at, ...rest } = row;
+  return {
+    id: row.id,
+    ...(data || {}),
+    created_at: created_at || data?.created_at,
+    updated_at: updated_at || data?.updated_at,
+  };
 }
 
 export async function getAll(collection, tenantId) {
-  const db = getDb(tenantId);
-  const rows = parseRows(db.prepare(`SELECT * FROM ${tableName(collection)} ORDER BY id`).all());
-  db.close();
-  return rows;
+  const table = tableName(collection);
+  const { data, error } = await supabase
+    .from(table)
+    .select('*')
+    .eq('data->>tenant_id', String(tenantId))
+    .order('id', { ascending: true });
+  if (error) throw error;
+  return (data || []).map(mergeData);
 }
 
 export async function getById(collection, id, tenantId) {
-  const db = getDb(tenantId);
-  const row = parseRow(db.prepare(`SELECT * FROM ${tableName(collection)} WHERE id = ?`).get(id));
-  db.close();
-  return row;
+  const table = tableName(collection);
+  const { data, error } = await supabase
+    .from(table)
+    .select('*')
+    .eq('id', id)
+    .eq('data->>tenant_id', String(tenantId))
+    .maybeSingle();
+  if (error) throw error;
+  return mergeData(data);
 }
 
 export async function create(collection, inputData, tenantId) {
-  const db = getDb(tenantId);
   const table = tableName(collection);
-  const data = filterCols(db, table, { ...inputData });
-  if (data.id) delete data.id;
-
-  for (const col of Object.keys(data)) {
-    if (JSON_COLS.has(col) && typeof data[col] !== 'string') {
-      data[col] = JSON.stringify(data[col]);
-    }
-  }
-
-  const cols = Object.keys(data);
-  const vals = Object.values(data);
-  const placeholders = vals.map(() => '?').join(', ');
-
-  const stmt = db.prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`);
-  const result = stmt.run(...vals);
-
-  const row = parseRow(db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(result.lastInsertRowid));
-  db.close();
-  return row;
+  const now = new Date().toISOString();
+  const payload = { ...inputData };
+  delete payload.id;
+  const { data, error } = await supabase
+    .from(table)
+    .insert({ data: { ...payload, tenant_id: String(tenantId), created_at: now, updated_at: now } })
+    .select()
+    .single();
+  if (error) throw error;
+  return mergeData(data);
 }
 
 export async function update(collection, id, inputData, tenantId) {
-  const db = getDb(tenantId);
   const table = tableName(collection);
-  const data = filterCols(db, table, { ...inputData, updated_at: new Date().toISOString() });
-  if (data.id) delete data.id;
-
-  for (const col of Object.keys(data)) {
-    if (JSON_COLS.has(col) && typeof data[col] !== 'string') {
-      data[col] = JSON.stringify(data[col]);
-    }
+  const { data: current, error: getError } = await supabase
+    .from(table)
+    .select('data')
+    .eq('id', id)
+    .eq('data->>tenant_id', String(tenantId))
+    .single();
+  if (getError) {
+    if (getError.code === 'PGRST116') return null;
+    throw getError;
   }
-
-  const setClause = Object.keys(data).map(k => `${k} = ?`).join(', ');
-  const vals = [...Object.values(data), id];
-
-  db.prepare(`UPDATE ${table} SET ${setClause} WHERE id = ?`).run(...vals);
-  const row = parseRow(db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id));
-  db.close();
-  return row;
+  const now = new Date().toISOString();
+  const payload = { ...inputData };
+  delete payload.id;
+  const mergedData = { ...(current.data || {}), ...payload, updated_at: now };
+  const { data, error } = await supabase
+    .from(table)
+    .update({ data: mergedData })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return mergeData(data);
 }
 
 export async function remove(collection, id, tenantId) {
-  const db = getDb(tenantId);
   const table = tableName(collection);
-  const result = db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(id);
-  db.close();
-  return result.changes > 0;
+  const { data, error } = await supabase
+    .from(table)
+    .delete()
+    .eq('id', id)
+    .eq('data->>tenant_id', String(tenantId))
+    .select();
+  if (error) throw error;
+  return (data || []).length > 0;
 }
 
 export async function query(collection, fn, tenantId) {
@@ -168,5 +99,10 @@ export async function query(collection, fn, tenantId) {
   return rows.filter(fn);
 }
 
+export function initTenantDb(_tenantId) {
+  // No-op: Supabase tables já existem globalmente
+}
+
 export async function migrateDataFromJson() {
+  // No-op: dados já estão no Supabase
 }

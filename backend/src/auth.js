@@ -30,7 +30,7 @@ export function generateTenantToken(tenantUser, tenantId) {
 export { JWT_SECRET, JWT_EXPIRES };
 
 export function authMiddleware(req, res, next) {
-  if (TEST_MODE) {
+  if (AUTH_BYPASS) {
     req.user = { id: 1, user_id: 1, tenant_id: TEST_TENANT_ID, permissao: 'admin' };
     req.tenant_id = TEST_TENANT_ID;
     req.user_id = 1;

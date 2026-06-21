@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const loginDev = () => {
+    if (import.meta.env.PROD) return;
     const devUser: User = {
       id: 1,
       nome: 'Admin Dev',

@@ -9,6 +9,7 @@ import { supabase } from './supabaseClient.js';
 import { authMiddleware } from './auth.js';
 import { tenantGuard } from './middleware/tenantGuard.js';
 import { requestLogger } from './middleware/requestLogger.js';
+import { adminGuard } from './middleware/adminGuard.js';
 import { globalLimiter, tenantRateLimit } from './middleware/rateLimiter.js';
 import { getAll, getById, create, update, remove, query } from './store.js';
 import * as pagarme from './pagarme.js';
@@ -66,7 +67,7 @@ app.use('/api/saas', saasRoutes);
 app.use('/api/admin', authMiddleware, tenantRateLimit, adminRoutes);
 app.use('/api/nfe', authMiddleware, tenantGuard, tenantRateLimit, nfeRoutes);
 
-function crudRoutes(collection) {
+function crudRoutes(collection, adminWrite = false) {
   const router = express.Router();
 
   router.use(authMiddleware, tenantGuard, tenantRateLimit);
@@ -85,18 +86,20 @@ function crudRoutes(collection) {
     res.json(item);
   });
 
-  router.post('/', async (req, res) => {
+  const writeGuard = adminWrite ? adminGuard : (req, res, next) => next();
+
+  router.post('/', writeGuard, async (req, res) => {
     const item = await create(collection, req.body, req.tenant_id);
     res.status(201).json(item);
   });
 
-  router.put('/:id', async (req, res) => {
+  router.put('/:id', writeGuard, async (req, res) => {
     const item = await update(collection, Number(req.params.id), req.body, req.tenant_id);
     if (!item) return res.status(404).json({ error: `${collection} não encontrado` });
     res.json(item);
   });
 
-  router.delete('/:id', async (req, res) => {
+  router.delete('/:id', adminGuard, async (req, res) => {
     const ok = await remove(collection, Number(req.params.id), req.tenant_id);
     if (!ok) return res.status(404).json({ error: `${collection} não encontrado` });
     res.status(204).send();
@@ -105,7 +108,7 @@ function crudRoutes(collection) {
   return router;
 }
 
-app.use('/api/produtos', crudRoutes('produtos'));
+app.use('/api/produtos', crudRoutes('produtos', true));
 
 app.get('/api/cardapio/produtos', async (req, res) => {
   const { slug } = req.query;
@@ -397,15 +400,15 @@ app.get('/api/relatorios/vendas', authMiddleware, tenantGuard, tenantRateLimit, 
   res.json({ periodo: 'Geral', total_vendas, total_recebido, total_descontos, quantidade_pedidos, ticket_medio, vendas_por_forma_pagamento, produtos_mais_vendidos });
 });
 
-app.use('/api/cupons', crudRoutes('cupons'));
+app.use('/api/cupons', crudRoutes('cupons', true));
 app.use('/api/fidelidade/clientes', crudRoutes('fidelidade_clientes'));
 app.use('/api/nps', crudRoutes('nps'));
 app.use('/api/carrinhos', crudRoutes('carrinhos'));
-app.use('/api/adicionais/categorias', crudRoutes('categorias-adicionais'));
-app.use('/api/adicionais', crudRoutes('adicionais'));
+app.use('/api/adicionais/categorias', crudRoutes('categorias-adicionais', true));
+app.use('/api/adicionais', crudRoutes('adicionais', true));
 
 app.use('/api/pagamentos', crudRoutes('pagamentos'));
-app.use('/api/integracoes', crudRoutes('integracoes'));
+app.use('/api/integracoes', crudRoutes('integracoes', true));
 
 app.get('/api/fidelidade/config', authMiddleware, tenantGuard, tenantRateLimit, async (req, res) => {
   const configs = await getAll('fidelidade_config', req.tenant_id);
@@ -591,7 +594,7 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 app.post('/api/produtos/:id/imagem', authMiddleware, tenantGuard, tenantRateLimit, (req, res) => {
   upload.single('imagem')(req, res, async (err) => {
     if (err) {
-      if (err instanceof multer.MulerError && err.code === 'LIMIT_FILE_SIZE') {
+      if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
         return res.status(400).json({ error: 'Arquivo muito grande. Máximo: 5MB' });
       }
       return res.status(400).json({ error: err.message || 'Erro ao fazer upload' });

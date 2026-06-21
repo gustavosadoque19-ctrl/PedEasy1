@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 // hardcoded em auth.js foi removido, então sem JWT_SECRET o boot falha.
 const REQUIRED_SECRETS = ['JWT_SECRET'];
 if (process.env.NODE_ENV === 'production') {
-  REQUIRED_SECRETS.push('PAGARME_SECRET_KEY', 'PAGARME_WEBHOOK_SECRET');
+  REQUIRED_SECRETS.push('PAGARME_SECRET_KEY', 'PAGARME_WEBHOOK_SECRET', 'RECAPTCHA_SECRET_KEY');
 }
 const missing = REQUIRED_SECRETS.filter((name) => !process.env[name]);
 if (missing.length > 0) {

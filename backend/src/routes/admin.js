@@ -98,9 +98,12 @@ router.post('/tenants', authMiddleware, isSuperAdmin, async (req, res) => {
     .select()
     .maybeSingle();
 
-  if (tenantErr) return res.status(500).json({ error: tenantErr.message });
+  if (tenantErr) {
+    console.error('Erro ao buscar tenant:', tenantErr);
+    return res.status(500).json({ error: 'Erro interno ao criar usuário' });
+  }
 
-  const senhaHash = await bcrypt.hash(senha, 10);
+  const senhaHash = await bcrypt.hash(senha, 12);
   const { data: user, error: userErr } = await supabase
     .from('tenant_users')
     .insert({

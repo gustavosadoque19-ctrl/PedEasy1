@@ -21,7 +21,7 @@ async function seed() {
 
   // Gera senha aleatória de 12 caracteres
   const seedPass = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
-  const senhaHash = bcrypt.hashSync(seedPass, 10);
+  const senhaHash = bcrypt.hashSync(seedPass, 12);
 
   console.log('📦 Inserindo dados iniciais...');
 

@@ -1,7 +1,10 @@
 import ReCAPTCHA from 'react-google-recaptcha';
 import { useRef, forwardRef, useImperativeHandle } from 'react';
 
-const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+if (!SITE_KEY && import.meta.env.PROD) {
+  console.error('VITE_RECAPTCHA_SITE_KEY não configurada');
+}
 
 export interface ReCaptchaHandle {
   getToken: () => string | null;
@@ -15,6 +18,8 @@ const ReCaptcha = forwardRef<ReCaptchaHandle>((_props, ref) => {
     getToken: () => captchaRef.current?.getValue() || null,
     reset: () => captchaRef.current?.reset(),
   }));
+
+  if (!SITE_KEY) return null;
 
   return (
     <ReCAPTCHA

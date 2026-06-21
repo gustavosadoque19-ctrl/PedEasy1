@@ -96,7 +96,7 @@ router.post('/signup', signupLimiter, recaptchaMiddleware, async (req, res) => {
   }
 
   const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-  const senhaHash = await bcrypt.hash(senha, 10);
+  const senhaHash = await bcrypt.hash(senha, 12);
 
   const { data: tenant, error: tenantErr } = await supabase
     .from('tenants')

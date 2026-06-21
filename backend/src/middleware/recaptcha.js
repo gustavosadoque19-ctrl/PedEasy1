@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY || '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe';
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
+if (!RECAPTCHA_SECRET) {
+  throw new Error('RECAPTCHA_SECRET_KEY não configurada. Defina a variável de ambiente.');
+}
 
 export async function verifyRecaptcha(token) {
   if (!token) return false;

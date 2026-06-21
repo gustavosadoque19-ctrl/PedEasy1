@@ -96,6 +96,10 @@ router.post('/register', loginLimiter, recaptchaMiddleware, async (req, res) => 
     return res.status(400).json({ error: 'Nome, usuário e senha obrigatórios' });
   }
 
+  if (senha.length < 8 || !/[A-Z]/.test(senha) || !/[0-9]/.test(senha)) {
+    return res.status(400).json({ error: 'Senha deve ter no mínimo 8 caracteres, com pelo menos 1 letra maiúscula e 1 número' });
+  }
+
   // Auto-cadastro legado também exige contexto de tenant.
   const tenantId = await resolveTenantId(req);
   if (!tenantId) {
@@ -109,7 +113,7 @@ router.post('/register', loginLimiter, recaptchaMiddleware, async (req, res) => 
     return res.status(409).json({ error: 'Usuário já existe' });
   }
 
-  const senhaHash = await bcrypt.hash(senha, 10);
+  const senhaHash = await bcrypt.hash(senha, 12);
   await create('funcionarios', {
     nome, usuario, senha: senhaHash,
     cargo: cargo || 'Atendente',

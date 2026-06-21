@@ -4,6 +4,7 @@ interface MockResponse<T> {
 
 export function createMockStore<T extends { id?: number }>(storageKey: string) {
   function getLocalData(): T[] {
+    if (import.meta.env.PROD) return [];
     try {
       const data = localStorage.getItem(storageKey);
       return data ? JSON.parse(data) : [];
@@ -13,6 +14,7 @@ export function createMockStore<T extends { id?: number }>(storageKey: string) {
   }
 
   function saveLocalData(data: T[]) {
+    if (import.meta.env.PROD) return;
     localStorage.setItem(storageKey, JSON.stringify(data));
   }
 
